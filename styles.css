@@ -62,13 +62,14 @@ img {
   pointer-events: none;
 }
 
-/* FP-слой: леска + удочка (ниже основного UI — см. --z-app) */
+/* FP-декор отключён — блок разметки сохранён для script.js; показать: убрать display:none */
 .scene-fp {
   position: fixed;
   inset: 0;
   z-index: var(--z-scene-fp);
   overflow: visible;
   pointer-events: none;
+  display: none !important;
 }
 
 .scene-fp__line {
@@ -970,8 +971,9 @@ img {
   gap: 14px;
   align-items: end;
   margin-top: auto;
-  padding-top: 10px;
-  padding-bottom: 4px;
+  padding-top: 12px;
+  padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
+  padding-inline: clamp(6px, 1.2vw, 14px);
   position: relative;
   z-index: 5;
   isolation: isolate;
@@ -980,17 +982,21 @@ img {
 .controls-zone--left {
   grid-area: dock-left;
   justify-self: start;
+  align-self: end;
   min-width: 0;
 }
 
 .controls-zone--center {
   grid-area: dock-center;
   justify-self: center;
+  align-self: end;
+  min-width: 0;
 }
 
 .controls-zone--right {
   grid-area: dock-right;
   justify-self: end;
+  align-self: end;
   min-width: 0;
 }
 
@@ -1023,6 +1029,28 @@ img {
   flex-shrink: 0;
 }
 
+.dock-bet.dock-bet--compact {
+  width: fit-content;
+  max-width: min(184px, 46vw);
+  padding: 8px 10px;
+}
+
+.dock-bet.dock-bet--compact .dock-label {
+  margin-bottom: 6px;
+  font-size: 0.54rem;
+}
+
+.dock-bet.dock-bet--compact .bet-val {
+  font-size: 0.96rem;
+  min-width: 3.25rem;
+}
+
+.dock-bet.dock-bet--compact .btn-step {
+  width: 36px;
+  height: 36px;
+  font-size: 1.12rem;
+}
+
 .action-block {
   display: flex;
   flex-direction: column;
@@ -1031,6 +1059,17 @@ img {
   padding: 12px 14px;
   border-radius: 22px;
   min-width: min(92vw, 300px);
+}
+
+/* Центральные действия без второго стеклянного блока — акцент на капсулах */
+.action-block.action-block--primary {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 6px 8px;
+  gap: 12px;
 }
 
 .dock-auto {
@@ -1228,26 +1267,31 @@ button:disabled {
 .btn-pill.btn-cash {
   min-width: 0;
   width: 100%;
-  min-height: 52px;
-  padding: 14px 28px;
-  font-size: 0.92rem;
-  letter-spacing: 0.12em;
+  min-height: 56px;
+  padding: 18px 32px;
+  font-size: 0.98rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   position: relative;
+  z-index: 1;
   overflow: hidden;
   border-radius: 999px;
+  border-width: 2px;
+  border-style: solid;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
 }
 
 .btn-pill.btn-cast {
   color: #031018;
   background: linear-gradient(175deg, #5ae8ff 0%, var(--neon-deep) 52%, #0c5f82 100%);
-  border: 1px solid rgba(190, 248, 255, 0.55);
+  border-color: rgba(190, 248, 255, 0.72);
   box-shadow:
-    0 10px 36px var(--neon-soft),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    0 12px 40px var(--neon-soft),
+    inset 0 2px 0 rgba(255, 255, 255, 0.38);
 }
 
 .btn-pill.btn-cast::after {
@@ -1262,10 +1306,10 @@ button:disabled {
 .btn-pill.btn-cash {
   color: #1f1404;
   background: linear-gradient(175deg, var(--gold-hot) 0%, #e8b92e 48%, #a87316 100%);
-  border: 1px solid rgba(255, 244, 200, 0.65);
+  border-color: rgba(255, 244, 200, 0.82);
   box-shadow:
-    0 10px 38px var(--gold-glow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    0 12px 42px var(--gold-glow),
+    inset 0 2px 0 rgba(255, 255, 255, 0.48);
 }
 
 .btn-pill.btn-cash.pulse-high {
@@ -1279,9 +1323,9 @@ button:disabled {
 }
 
 .btn-cast__icon {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.35), transparent),
     radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.55), transparent 55%);
@@ -1289,9 +1333,9 @@ button:disabled {
 }
 
 .btn-cash__icon {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.55), transparent),
     repeating-linear-gradient(
@@ -1337,37 +1381,25 @@ button:disabled {
     max-height: none;
   }
 
-  /* Карточка автокэшаута у правого края; удочка смещена к центру — полоса справа только под HUD */
-  .dock-bar {
-    padding-right: min(16vw, 168px);
-  }
-
-  .controls-zone--center {
-    position: relative;
-    z-index: 5;
-    padding-right: clamp(12px, 3vw, 36px);
-  }
-
-  .controls-zone--right {
-    position: relative;
-    z-index: 6;
-    transform: translate(
-      calc(-1 * clamp(10px, 1.2vw, 28px)),
-      calc(-1 * clamp(14px, 2vh, 26px))
-    );
-  }
-
   .action-block {
     flex-direction: row;
     align-items: stretch;
-    min-width: min(92vw, 380px);
+    min-width: min(62vw, 420px);
+  }
+
+  .action-block.action-block--primary {
+    gap: 16px;
+    padding: 4px 6px;
   }
 
   .btn-pill.btn-cast,
   .btn-pill.btn-cash {
     width: auto;
     flex: 1;
-    min-height: 54px;
+    flex-basis: 0;
+    min-height: 58px;
+    padding: 19px 36px;
+    font-size: 1rem;
   }
 }
 
@@ -1455,20 +1487,6 @@ button:disabled {
 
   .auto-mult {
     margin-left: auto;
-  }
-
-  .fp-rig {
-    width: min(50vw, 280px);
-    height: min(24vh, 200px);
-    right: clamp(96px, 26vw, 200px);
-    left: auto;
-    bottom: clamp(112px, 21vh, 172px);
-    opacity: 0.86;
-  }
-
-  .fp-rig__svg {
-    transform: scale(0.72);
-    transform-origin: 92% 98%;
   }
 
   .brand .tagline {

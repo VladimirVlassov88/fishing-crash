@@ -293,7 +293,7 @@
     updateTensionVisual();
 
     const tNorm = tensionPercent() / 100;
-    els.lineWrap.classList.toggle("shake", reeling);
+    if (els.lineWrap) els.lineWrap.classList.toggle("shake", reeling);
     els.btnCash.classList.toggle("pulse-high", reeling && tensionPercent() >= 75);
 
     if (els.rodRig) {
@@ -335,7 +335,7 @@
   }
 
   function resetLineSnapClass() {
-    els.lineWrap.classList.remove("snap");
+    if (els.lineWrap) els.lineWrap.classList.remove("snap");
   }
 
   function stopLoop() {
@@ -412,7 +412,7 @@
     currentMultiplier = 1;
 
     els.fishSilhouette.classList.remove("visible");
-    els.lineWrap.classList.remove("shake", "snap", "line-fp--taut");
+    if (els.lineWrap) els.lineWrap.classList.remove("shake", "snap", "line-fp--taut");
     if (els.waterZone) els.waterZone.classList.remove("danger", "risk-shake");
     els.btnCash.classList.remove("pulse-high");
     if (els.rodRig) {
@@ -472,6 +472,7 @@
       return;
     }
 
+    /* Автокэшаут: включённый toggle + множитель ≥ цели → cashOut() (то же условие в maybeAutoCashOut для toggle/таймера). */
     if (autoCashoutEnabled && currentMultiplier + 1e-9 >= autoCashoutValue) {
       renderRoundVisuals();
       cashOut();
@@ -488,8 +489,8 @@
 
     els.btnCast.disabled = true;
     els.btnCash.disabled = true;
-    els.lineWrap.classList.remove("shake");
-    els.lineWrap.classList.add("snap");
+    if (els.lineWrap) els.lineWrap.classList.remove("shake");
+    if (els.lineWrap) els.lineWrap.classList.add("snap");
     window.setTimeout(resetLineSnapClass, 400);
 
     els.catchDisplay.textContent = "0 ₸";
@@ -526,7 +527,7 @@
 
     els.btnCast.disabled = true;
     els.btnCash.disabled = true;
-    els.lineWrap.classList.remove("shake");
+    if (els.lineWrap) els.lineWrap.classList.remove("shake");
     if (els.waterZone) els.waterZone.classList.remove("danger", "risk-shake");
     els.btnCash.classList.remove("pulse-high");
 

@@ -109,7 +109,7 @@
 
     <div class="controls dock-bar">
       <div class="controls-zone controls-zone--left">
-        <div class="bet-block glass dock-bet">
+        <div class="bet-block glass dock-bet dock-bet--compact">
           <p class="dock-label">Ставка</p>
           <div class="bet-row">
             <button type="button" class="btn-step" id="betMinus" aria-label="Уменьшить ставку">−</button>
@@ -120,7 +120,7 @@
       </div>
 
       <div class="controls-zone controls-zone--center">
-        <div class="action-block glass">
+        <div class="action-block action-block--primary">
           <button type="button" class="btn-pill btn-cast" id="btnCast">
             <span class="btn-cast__icon" aria-hidden="true"></span>
             ЗАБРОС
@@ -160,7 +160,7 @@
     <p class="footer-note">Прототип с виртуальным балансом. Без реальных платежей.</p>
   </div>
 
-  <!-- FP-сцена ниже HUD: подслои леска → удочка/рука -->
+  <!-- FP (леска/удочка): скрыто в CSS; разметка для script.js -->
   <div class="scene-fp" aria-hidden="true">
     <div class="scene-fp__line">
       <div class="line-fp" id="lineWrap">
