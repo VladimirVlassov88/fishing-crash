@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Улов X</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Фон ночной сцены (нижний слой) -->
+  <div class="scene-back" aria-hidden="true">
+    <div class="sky">
+      <div class="stars"></div>
+      <div class="moon"></div>
+      <div class="vignette"></div>
+    </div>
+
+    <div class="horizon">
+      <div class="treeline"></div>
+      <div class="shore-glow"></div>
+    </div>
+
+    <div class="lake">
+      <div class="moon-track">
+        <div class="moon-reflection"></div>
+      </div>
+      <div class="surface-band">
+        <div class="surface-line"></div>
+        <div class="waves waves-a"></div>
+        <div class="waves waves-b"></div>
+      </div>
+
+      <div class="water-split">
+        <div class="above-water">
+          <div class="caustics"></div>
+          <div class="splash-ring splash-ring--outer"></div>
+          <div class="splash-ring splash-ring--mid"></div>
+          <div class="splash-core"></div>
+        </div>
+
+        <div class="underwater" id="waterZone">
+          <div class="depth-gradient"></div>
+          <div class="murk"></div>
+          <div class="particles"></div>
+          <div class="beam"></div>
+          <div class="fish-silhouette" id="fishSilhouette">
+            <img src="assets/fish-silhouette.svg" alt="" width="180" height="72" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flash flash-gold" id="flashGold"></div>
+  <div class="flash flash-red" id="flashRed"></div>
+
+  <div class="app">
+    <header class="top-bar">
+      <div class="brand">
+        <h1>УЛОВ <span class="x">X</span></h1>
+        <p class="tagline">Забрось. Тяни. Забери до обрыва.</p>
+      </div>
+      <div class="stats">
+        <div class="stat-box stat-box--balance">
+          <label>БАЛАНС</label>
+          <div class="val"><span id="balanceDisplay">10 000</span> ₸</div>
+        </div>
+        <div class="stat-box stat-box--bet">
+          <label>СТАВКА</label>
+          <div class="val"><span id="betDisplayTop">500</span> ₸</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="status-pill" id="statusText">Выберите ставку и сделайте заброс.</div>
+
+    <div class="main-grid">
+      <aside class="panel panel-left glass">
+        <h2>РЫБЫ</h2>
+        <div class="fish-row crucian"><span class="fish-dot"></span><span>Карась</span><span class="fish-meta">×1.2</span></div>
+        <div class="fish-row perch"><span class="fish-dot"></span><span>Окунь</span><span class="fish-meta">×2</span></div>
+        <div class="fish-row pike"><span class="fish-dot"></span><span>Щука</span><span class="fish-meta">×3.5</span></div>
+        <div class="fish-row catfish"><span class="fish-dot"></span><span>Сом</span><span class="fish-meta">×6</span></div>
+        <div class="fish-row goldfish"><span class="fish-dot"></span><span>Золотая рыба</span><span class="fish-meta">×10</span></div>
+      </aside>
+
+      <section class="panel panel-center hud-center">
+        <div class="multiplier dim" id="multDisplay">×1.00</div>
+        <div class="catch-amount" id="catchDisplay">0 ₸</div>
+        <div class="fish-name" id="fishLine">&nbsp;</div>
+        <div class="tension-wrap hud-tension">
+          <label>НАТЯЖЕНИЕ ЛЕСКИ</label>
+          <div class="tension-bar">
+            <div class="tension-fill" id="tensionFill"></div>
+            <div class="tension-needle" id="tensionNeedle"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel panel-right glass" id="historyPanel">
+        <button type="button" class="hist-toggle" id="histToggle" aria-expanded="false" aria-controls="historyList">
+          <span class="hist-toggle__title">ПОСЛЕДНИЕ РАУНДЫ</span>
+          <span class="hist-toggle__icon" aria-hidden="true"></span>
+        </button>
+        <h2 class="hist-heading-desktop">ПОСЛЕДНИЕ РАУНДЫ</h2>
+        <div class="hist-list" id="historyList"></div>
+      </aside>
+    </div>
+
+    <div class="controls dock-bar">
+      <div class="controls-zone controls-zone--left">
+        <div class="bet-block glass dock-bet">
+          <p class="dock-label">Ставка</p>
+          <div class="bet-row">
+            <button type="button" class="btn-step" id="betMinus" aria-label="Уменьшить ставку">−</button>
+            <div class="bet-val"><span id="betDisplay">500</span> ₸</div>
+            <button type="button" class="btn-step" id="betPlus" aria-label="Увеличить ставку">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls-zone controls-zone--center">
+        <div class="action-block glass">
+          <button type="button" class="btn-pill btn-cast" id="btnCast">
+            <span class="btn-cast__icon" aria-hidden="true"></span>
+            ЗАБРОС
+          </button>
+          <button type="button" class="btn-pill btn-cash" id="btnCash" disabled>
+            <span class="btn-cash__icon" aria-hidden="true"></span>
+            В САДОК
+          </button>
+        </div>
+      </div>
+
+      <div class="controls-zone controls-zone--right">
+        <div class="auto-block glass dock-auto dock-auto--hud">
+          <p class="dock-label">Автокэшаут</p>
+          <div class="auto-row">
+            <button
+              type="button"
+              class="toggle-switch"
+              id="autoCashoutToggle"
+              aria-pressed="false"
+              aria-label="Включить автокэшаут"
+            ></button>
+            <span class="toggle-state" id="autoCashoutState">OFF</span>
+            <span class="auto-mult" id="autoCashoutMult">×2.00</span>
+          </div>
+          <div class="auto-presets" id="autoPresets">
+            <button type="button" class="btn-preset" data-mult="1.2">×1.2</button>
+            <button type="button" class="btn-preset" data-mult="1.5">×1.5</button>
+            <button type="button" class="btn-preset" data-mult="2">×2</button>
+            <button type="button" class="btn-preset" data-mult="3">×3</button>
+            <button type="button" class="btn-preset" data-mult="5">×5</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="footer-note">Прототип с виртуальным балансом. Без реальных платежей.</p>
+  </div>
+
+  <!-- FP-сцена ниже HUD: подслои леска → удочка/рука -->
+  <div class="scene-fp" aria-hidden="true">
+    <div class="scene-fp__line">
+      <div class="line-fp" id="lineWrap">
+        <svg class="line-fp__svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="lg" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#eaf6ff" stop-opacity="0.95"/>
+              <stop offset="100%" stop-color="#7ecbff" stop-opacity="0.55"/>
+            </linearGradient>
+            <filter id="lglow" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="0.35" result="b"/>
+              <feMerge>
+                <feMergeNode in="b"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <path id="linePath" class="line-fp__path" d="" fill="none" stroke="url(#lg)" stroke-width="0.35" stroke-linecap="round" filter="url(#lglow)" />
+        </svg>
+      </div>
+    </div>
+
+    <div class="scene-fp__rig">
+      <div class="fp-rig" id="rodRig">
+        <svg class="fp-rig__svg" viewBox="0 0 320 280" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="skinFp" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#5c473e"/>
+              <stop offset="100%" stop-color="#2a1f1a"/>
+            </linearGradient>
+            <linearGradient id="rodMetalFp" x1="0%" y1="50%" x2="100%" y2="50%">
+              <stop offset="0%" stop-color="#242d38"/>
+              <stop offset="40%" stop-color="#4a5666"/>
+              <stop offset="100%" stop-color="#141a22"/>
+            </linearGradient>
+            <linearGradient id="rodAccentFp" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#3ad0f5"/>
+              <stop offset="100%" stop-color="#157aa8"/>
+            </linearGradient>
+          </defs>
+          <ellipse cx="220" cy="254" rx="44" ry="25" fill="url(#skinFp)" opacity="0.82" transform="rotate(-8 220 254)"/>
+          <ellipse cx="274" cy="234" rx="31" ry="54" fill="url(#skinFp)" opacity="0.78" transform="rotate(14 274 234)"/>
+          <ellipse cx="238" cy="216" rx="25" ry="16" fill="#2d221c" opacity="0.45" transform="rotate(-10 238 216)"/>
+          <g transform="rotate(-4 118 198)">
+            <g class="rod-assembly" transform-origin="118 198">
+              <path d="M118 198 L52 222 L48 232 L56 238 L122 208 Z" fill="#171c24" stroke="#2e3848" stroke-width="0.85"/>
+              <path id="rodBlank" d="M118 198 Q172 132 248 58 L252 52 L258 56 L182 138 Q148 176 122 202 Z" fill="url(#rodMetalFp)" stroke="#2ecbff" stroke-opacity="0.26" stroke-width="0.6"/>
+              <path d="M248 58 L252 52 L258 56 L254 62 Z" fill="url(#rodAccentFp)"/>
+              <circle cx="132" cy="188" r="15" fill="#1e2630" stroke="rgba(232,197,71,0.32)" stroke-width="1.35"/>
+              <circle cx="132" cy="188" r="8" fill="none" stroke="rgba(46,203,255,0.26)" stroke-width="1.35" stroke-dasharray="3 5" class="reel-spin"/>
+              <line x1="132" y1="188" x2="252" y2="56" stroke="rgba(255,255,255,0.055)" stroke-width="2.75" stroke-linecap="round"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
