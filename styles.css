@@ -36,6 +36,7 @@
 
 html {
   height: 100%;
+  background-color: var(--bg-deep);
 }
 
 body {
@@ -43,7 +44,7 @@ body {
   height: 100%;
   font-family: var(--font);
   color: var(--text);
-  background: var(--bg-deep);
+  background: transparent;
   overflow-x: hidden;
 }
 
@@ -60,6 +61,23 @@ img {
   z-index: var(--z-scene-back);
   overflow: hidden;
   pointer-events: none;
+  background-color: var(--bg-deep);
+  background-image:
+    linear-gradient(180deg, rgba(0, 10, 25, 0.35), rgba(0, 10, 25, 0.35)),
+    url("./assets/backgrounds/bg_main.png");
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.scene-back > .sky,
+.scene-back > .horizon {
+  display: none !important;
+}
+
+.scene-back .lake .moon-track,
+.scene-back .lake .surface-band {
+  display: none !important;
 }
 
 /* FP-декор отключён — блок разметки сохранён для script.js; показать: убрать display:none */
@@ -181,6 +199,22 @@ img {
   pointer-events: none;
 }
 
+.scene-underwater-bg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.55;
+  background-image: url("./assets/backgrounds/bg_underwater.png");
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
 .moon-track {
   position: absolute;
   left: clamp(8%, 18vw, 22%);
@@ -271,9 +305,10 @@ img {
   bottom: 0;
   border-radius: 28px 28px 0 0;
   overflow: hidden;
+  z-index: 1;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 -12px 48px rgba(0, 0, 0, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 -8px 28px rgba(0, 0, 0, 0.18);
 }
 
 .above-water {
@@ -282,8 +317,7 @@ img {
   right: 0;
   top: 0;
   height: 42%;
-  background:
-    radial-gradient(ellipse 90% 120% at 50% 120%, rgba(12, 52, 82, 0.55) 0%, rgba(8, 26, 46, 0.88) 65%, rgba(5, 18, 34, 0.95) 100%);
+  background: transparent;
   overflow: hidden;
 }
 
@@ -294,7 +328,7 @@ img {
     radial-gradient(ellipse at 30% 70%, rgba(56, 214, 255, 0.08) 0%, transparent 42%),
     radial-gradient(ellipse at 70% 65%, rgba(120, 220, 255, 0.06) 0%, transparent 38%);
   animation: causticShift 11s ease-in-out infinite;
-  opacity: 0.9;
+  opacity: 0.35;
 }
 
 @keyframes causticShift {
@@ -356,9 +390,9 @@ img {
   top: 38%;
   background: linear-gradient(
     180deg,
-    rgba(6, 22, 42, 0.92) 0%,
-    rgba(4, 14, 30, 0.98) 55%,
-    #020810 100%
+    rgba(6, 22, 42, 0.06) 0%,
+    rgba(4, 14, 30, 0.1) 55%,
+    rgba(2, 10, 18, 0.14) 100%
   );
   overflow: hidden;
 }
@@ -381,15 +415,16 @@ img {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(56, 214, 255, 0.12) 0%, transparent 35%),
-    radial-gradient(ellipse 80% 60% at 50% 15%, rgba(20, 140, 191, 0.18) 0%, transparent 55%);
+    linear-gradient(180deg, rgba(56, 214, 255, 0.06) 0%, transparent 35%),
+    radial-gradient(ellipse 80% 60% at 50% 15%, rgba(20, 140, 191, 0.08) 0%, transparent 55%);
+  opacity: 0.65;
 }
 
 .murk {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 50% 30%, transparent 20%, rgba(0, 8, 18, 0.65) 85%);
-  opacity: 0.85;
+  background: radial-gradient(ellipse at 50% 30%, transparent 28%, rgba(0, 8, 18, 0.18) 88%);
+  opacity: 0.45;
 }
 
 .particles {
@@ -401,7 +436,7 @@ img {
     radial-gradient(1px 1px at 44% 62%, rgba(180, 230, 255, 0.15), transparent),
     radial-gradient(1px 1px at 88% 72%, rgba(180, 230, 255, 0.14), transparent);
   animation: particleFloat 16s linear infinite;
-  opacity: 0.7;
+  opacity: 0.38;
 }
 
 @keyframes particleFloat {
