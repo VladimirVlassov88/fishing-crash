@@ -53,6 +53,12 @@
 
   <div class="flash flash-gold" id="flashGold"></div>
   <div class="flash flash-red" id="flashRed"></div>
+  <div class="flash flash-soft-cyan" id="flashSoftCyan"></div>
+  <div class="flash flash-bite" id="flashBite"></div>
+
+  <div class="bite-callout" id="biteCallout" aria-hidden="true">
+    <span class="bite-callout__text">КЛЁВ!</span>
+  </div>
 
   <div class="app">
     <header class="top-bar">
@@ -88,12 +94,12 @@
         <div class="multiplier dim" id="multDisplay">×1.00</div>
         <div class="catch-amount" id="catchDisplay">0 ₸</div>
         <div class="fish-name" id="fishLine">&nbsp;</div>
-        <div class="tension-wrap hud-tension">
-          <label>НАТЯЖЕНИЕ ЛЕСКИ</label>
-          <div class="tension-bar">
-            <div class="tension-fill" id="tensionFill"></div>
-            <div class="tension-needle" id="tensionNeedle"></div>
+        <div class="tension-wrap hud-tension resistance-wrap">
+          <label>СОПРОТИВЛЕНИЕ РЫБЫ</label>
+          <div class="tension-bar resistance-bar">
+            <div class="tension-fill resistance-fill" id="tensionFill"></div>
           </div>
+          <p class="resistance-hint" id="resistanceHint">&nbsp;</p>
         </div>
       </section>
 

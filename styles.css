@@ -363,18 +363,18 @@ img {
   overflow: hidden;
 }
 
-.underwater#waterZone.danger {
+.underwater#waterZone.resistance-intense {
   box-shadow:
-    inset 0 0 60px rgba(255, 51, 85, 0.2),
-    inset 0 -12px 40px rgba(255, 30, 60, 0.18);
-  animation: underwaterShake 0.12s infinite;
+    inset 0 0 52px rgba(56, 214, 255, 0.26),
+    inset 0 -14px 42px rgba(110, 72, 200, 0.18);
+  animation: underwaterChurnIntense 0.11s linear infinite;
 }
 
-@keyframes underwaterShake {
+@keyframes underwaterChurnIntense {
   0%, 100% { transform: translate(0, 0); }
-  25% { transform: translate(1px, -1px); }
-  50% { transform: translate(-2px, 1px); }
-  75% { transform: translate(2px, 1px); }
+  25% { transform: translate(-2px, 1px); }
+  50% { transform: translate(2px, -2px); }
+  75% { transform: translate(-1px, -1px); }
 }
 
 .depth-gradient {
@@ -579,6 +579,317 @@ img {
   background:
     radial-gradient(circle at 50% 42%, rgba(255, 51, 85, 0.48) 0%, transparent 52%),
     radial-gradient(circle at 50% 50%, rgba(120, 0, 20, 0.22) 0%, transparent 55%);
+}
+
+.flash-soft-cyan {
+  background:
+    radial-gradient(ellipse 72% 58% at 50% 36%, rgba(72, 210, 190, 0.38) 0%, transparent 58%),
+    radial-gradient(circle at 50% 44%, rgba(56, 160, 220, 0.16) 0%, transparent 52%);
+  transition: opacity 0.22s ease;
+}
+
+.flash-soft-cyan.show {
+  opacity: 0.92;
+}
+
+.flash-bite {
+  background:
+    radial-gradient(circle at 50% 36%, rgba(255, 248, 190, 0.52) 0%, transparent 42%),
+    radial-gradient(ellipse 85% 70% at 50% 52%, rgba(56, 214, 255, 0.28) 0%, transparent 58%),
+    radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.06) 0%, transparent 55%);
+}
+
+/* Всплывающая надпись «КЛЁВ!» — только фаза bite */
+.bite-callout {
+  position: fixed;
+  inset: 0;
+  z-index: 52;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.06s ease, visibility 0.06s ease;
+}
+
+.bite-callout.bite-callout--show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.bite-callout__text {
+  font-size: clamp(2.35rem, 11vw, 4.35rem);
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow:
+    0 0 32px rgba(56, 214, 255, 1),
+    0 0 64px rgba(238, 207, 82, 0.62),
+    0 6px 28px rgba(0, 0, 0, 0.72);
+  animation: biteCalloutPop 0.52s cubic-bezier(0.34, 1.45, 0.64, 1) both;
+}
+
+@keyframes biteCalloutPop {
+  0% {
+    transform: scale(0.35) translateY(12px);
+    opacity: 0;
+    filter: blur(6px);
+  }
+  55% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+/* ---------- Событийная обратная связь (body.event-*) ---------- */
+
+body.event-no-catch .lake {
+  filter: brightness(0.96) saturate(0.92);
+  transition: filter 0.6s ease;
+}
+
+body.event-no-catch .waves-a {
+  animation-duration: 9s;
+  opacity: 0.48;
+}
+
+body.event-no-catch .waves-b {
+  animation-duration: 11s;
+  opacity: 0.38;
+}
+
+body.event-no-catch .surface-band {
+  animation: reelInRipple 2.4s ease-in-out infinite;
+}
+
+@keyframes reelInRipple {
+  0%, 100% { transform: translateY(0); opacity: 1; }
+  50% { transform: translateY(1px); opacity: 0.92; }
+}
+
+body.event-small-catch .splash-core {
+  animation: splashSmallCatchOnce 0.75s ease-out forwards;
+}
+
+body.event-small-catch .splash-ring--outer,
+body.event-small-catch .splash-ring--mid {
+  animation: splashRingSoftOnce 0.7s ease-out forwards;
+}
+
+@keyframes splashSmallCatchOnce {
+  0% {
+    transform: translate(-50%, -48%) scale(0.88);
+    opacity: 0.35;
+  }
+  45% {
+    transform: translate(-50%, -54%) scale(1.14);
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.72;
+  }
+}
+
+@keyframes splashRingSoftOnce {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.88);
+  }
+  35% {
+    opacity: 0.55;
+    transform: translate(-50%, -52%) scale(1.02);
+  }
+  100% {
+    opacity: 0.08;
+    transform: translate(-50%, -52%) scale(1.06);
+  }
+}
+
+body.event-bite .lake {
+  animation: biteSceneNudge 0.24s ease-in-out 6;
+}
+
+@keyframes biteSceneNudge {
+  0%, 100% { transform: translate(0, 0); }
+  35% { transform: translate(-3px, 2px); }
+  70% { transform: translate(4px, -3px); }
+}
+
+body.event-bite #waterZone {
+  box-shadow:
+    inset 0 0 48px rgba(56, 214, 255, 0.22),
+    inset 0 -8px 36px rgba(238, 207, 82, 0.08);
+  animation: biteWaterJolt 0.18s ease-in-out 6;
+}
+
+@keyframes biteWaterJolt {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-2px, 2px); }
+}
+
+body.event-bite .splash-core {
+  animation: splashBiteBurst 0.55s cubic-bezier(0.33, 1.3, 0.52, 1) forwards;
+}
+
+body.event-bite .splash-ring--outer {
+  animation: splashRingBite 0.65s ease-out forwards;
+}
+
+body.event-bite .splash-ring--mid {
+  animation: splashRingBite 0.65s ease-out 0.08s forwards;
+}
+
+@keyframes splashBiteBurst {
+  0% {
+    transform: translate(-50%, -46%) scale(0.65);
+    opacity: 0.25;
+  }
+  40% {
+    transform: translate(-50%, -56%) scale(1.28);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.05);
+    opacity: 0.85;
+  }
+}
+
+@keyframes splashRingBite {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.75);
+  }
+  30% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0.15;
+    transform: translate(-50%, -56%) scale(1.15);
+  }
+}
+
+body.event-reeling .lake {
+  animation: none;
+}
+
+/* Лёгкая «борьба»: фоновая дрожь воды; при высоком атмосферном «сопротивлении» — бурление (не намёк на crash). */
+body.event-reeling #waterZone:not(.resistance-intense) {
+  animation: reelingWaterTremor 0.36s ease-in-out infinite;
+}
+
+@keyframes reelingWaterTremor {
+  0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(-1px, 0.8px); }
+  66% { transform: translate(0.9px, -0.7px); }
+}
+
+body.event-intense #waterZone.resistance-intense {
+  animation: fightWaterSurge 0.085s linear infinite !important;
+  box-shadow:
+    inset 0 0 72px rgba(56, 214, 255, 0.38),
+    inset 0 -18px 48px rgba(130, 88, 228, 0.28) !important;
+}
+
+@keyframes fightWaterSurge {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-4px, 3px); }
+  50% { transform: translate(3px, -3px); }
+  75% { transform: translate(4px, 2px); }
+}
+
+body.event-intense .lake {
+  filter: brightness(1.03) saturate(1.16);
+}
+
+body.event-intense .status-pill {
+  border-color: rgba(110, 210, 255, 0.55);
+  box-shadow:
+    0 0 22px rgba(56, 214, 255, 0.32),
+    inset 0 0 0 1px rgba(180, 140, 255, 0.12);
+}
+
+body.event-intense .btn-pill.btn-cash.pulse-high {
+  animation: btnPulseIntense 0.45s ease-in-out infinite;
+}
+
+@keyframes btnPulseIntense {
+  0%, 100% {
+    box-shadow: 0 10px 38px rgba(56, 214, 255, 0.45);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 16px 52px rgba(238, 207, 82, 0.72);
+    transform: scale(1.055);
+  }
+}
+
+body.event-reeling .panel.panel-center.hud-center .multiplier:not(.dim) {
+  text-shadow:
+    0 0 22px rgba(56, 214, 255, 0.35),
+    0 0 40px rgba(56, 214, 255, 0.12);
+}
+
+body.event-intense .panel.panel-center.hud-center .multiplier:not(.dim) {
+  text-shadow:
+    0 0 28px rgba(120, 200, 255, 0.55),
+    0 0 52px rgba(160, 110, 255, 0.22);
+}
+
+body.event-win .top-bar,
+body.event-win .main-grid .hud-center {
+  animation:
+    hudVictoryBump 0.75s cubic-bezier(0.34, 1.45, 0.64, 1) 2,
+    hudWinGlow 1.15s ease-out 2;
+}
+
+@keyframes hudVictoryBump {
+  0%, 100% { transform: scale(1); }
+  40% { transform: scale(1.035); }
+}
+
+@keyframes hudWinGlow {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  45% {
+    filter: brightness(1.14) drop-shadow(0 0 18px rgba(238, 207, 82, 0.45));
+  }
+}
+
+body.event-snap .top-bar {
+  animation: hudSnapFlash 0.45s ease-out;
+}
+
+body.event-snap .lake {
+  animation: snapLakeShake 0.52s cubic-bezier(0.34, 0.09, 0.27, 1);
+}
+
+@keyframes snapLakeShake {
+  0%, 100% { transform: translate(0, 0); }
+  12% { transform: translate(-7px, 5px); }
+  28% { transform: translate(6px, -6px); }
+  44% { transform: translate(-5px, 4px); }
+  60% { transform: translate(4px, -3px); }
+  76% { transform: translate(-3px, 2px); }
+}
+
+@keyframes hudSnapFlash {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  35% {
+    filter: brightness(1.08) contrast(1.05);
+  }
 }
 
 /* ---------- App shell / HUD ---------- */
@@ -853,42 +1164,38 @@ img {
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
+.resistance-hint {
+  margin-top: 8px;
+  font-size: 0.78rem;
+  text-align: center;
+  color: rgba(200, 226, 248, 0.72);
+  letter-spacing: 0.04em;
+  min-height: 1.35em;
+}
+
+.tension-fill.resist-band-soft {
+  background: linear-gradient(90deg, #1a6b7a, #2cb8c8);
+  box-shadow: 0 0 14px rgba(44, 184, 200, 0.38);
+}
+
+.tension-fill.resist-band-medium {
+  background: linear-gradient(90deg, #2380b8, #4fd0ff);
+  box-shadow: 0 0 18px rgba(79, 208, 255, 0.45);
+}
+
+.tension-fill.resist-band-high {
+  background: linear-gradient(90deg, #3570d4, #9b7dff);
+  box-shadow: 0 0 22px rgba(140, 110, 255, 0.5);
+}
+
 .tension-fill {
   height: 100%;
   width: 0%;
   border-radius: inherit;
   transition:
-    width 0.08s linear,
-    background 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.tension-fill.tension-zone-low {
-  background: linear-gradient(90deg, #2ee89e, var(--safe));
-  box-shadow: 0 0 14px rgba(56, 240, 168, 0.35);
-}
-
-.tension-fill.tension-zone-mid {
-  background: linear-gradient(90deg, var(--safe), var(--warn));
-  box-shadow: 0 0 18px rgba(255, 213, 74, 0.42);
-}
-
-.tension-fill.tension-zone-high {
-  background: linear-gradient(90deg, var(--warn), var(--danger));
-  box-shadow: 0 0 22px rgba(255, 51, 85, 0.55);
-}
-
-.tension-needle {
-  position: absolute;
-  top: -7px;
-  width: 5px;
-  height: 30px;
-  margin-left: -2px;
-  background: linear-gradient(180deg, #fff, #dbe8ff);
-  border-radius: 3px;
-  box-shadow: 0 0 14px rgba(255, 255, 255, 0.85);
-  left: 0%;
-  transition: left 0.06s linear;
+    width 0.09s linear,
+    background 0.22s ease,
+    box-shadow 0.22s ease;
 }
 
 /* История */
@@ -1551,9 +1858,9 @@ body.is-reeling .line-fp.shake .line-fp__path {
   filter: drop-shadow(0 0 5px rgba(56, 214, 255, 0.55));
 }
 
-body.is-danger .status-pill {
-  border-color: rgba(255, 90, 110, 0.55);
-  box-shadow: 0 0 20px rgba(255, 51, 85, 0.18);
+body.is-intense .status-pill {
+  border-color: rgba(90, 190, 255, 0.5);
+  box-shadow: 0 0 20px rgba(56, 214, 255, 0.22);
 }
 
 body.is-win .app {

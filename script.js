@@ -36,7 +36,7 @@
     catchDisplay: document.getElementById("catchDisplay"),
     fishLine: document.getElementById("fishLine"),
     tensionFill: document.getElementById("tensionFill"),
-    tensionNeedle: document.getElementById("tensionNeedle"),
+    resistanceHint: document.getElementById("resistanceHint"),
     historyList: document.getElementById("historyList"),
     historyPanel: document.getElementById("historyPanel"),
     histToggle: document.getElementById("histToggle"),
@@ -51,6 +51,9 @@
     rodRig: document.getElementById("rodRig"),
     flashGold: document.getElementById("flashGold"),
     flashRed: document.getElementById("flashRed"),
+    flashSoftCyan: document.getElementById("flashSoftCyan"),
+    flashBite: document.getElementById("flashBite"),
+    biteCallout: document.getElementById("biteCallout"),
     autoCashoutToggle: document.getElementById("autoCashoutToggle"),
     autoCashoutState: document.getElementById("autoCashoutState"),
     autoCashoutMult: document.getElementById("autoCashoutMult"),
@@ -75,6 +78,100 @@
   let lastTs = 0;
   /** Время старта фазы reeling (для ускорения роста) */
   let reelStartTs = 0;
+  /** Одноразовый вибро-импульс при «всплеске» атмосферного сопротивления (не связано с обрывом). */
+  let resistanceSpikeVibratePrimed = true;
+  /** Wall-clock старт фазы reeling — только для атмосферного индикатора. */
+  let reelWallStartMs = 0;
+  /** Случайная фаза колебаний индикатора «сопротивление» за раунд. */
+  let resistanceVisualSeed = 0;
+
+  const EVENT_BODY_CLASSES = [
+    "event-no-catch",
+    "event-small-catch",
+    "event-bite",
+    "event-reeling",
+    "event-intense",
+    "event-win",
+    "event-snap",
+  ];
+
+  /**
+   * Безопасный вызов Vibration API (мобильные).
+   * @param {number|number[]} pattern
+   */
+  function triggerVibration(pattern) {
+    try {
+      var nav = navigator;
+      if (!nav || typeof nav.vibrate !== "function") return;
+      nav.vibrate(pattern);
+    } catch (e) {}
+  }
+
+  /** Короткие щелчки катушки (имитация смотки лески при пустом забросе). */
+  function playReelWindTicks() {
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      var ctx = new AC();
+      var start = function () {
+        var n = 12;
+        var t = ctx.currentTime + 0.02;
+        for (var i = 0; i < n; i++) {
+          var osc = ctx.createOscillator();
+          var g = ctx.createGain();
+          osc.type = "square";
+          osc.frequency.setValueAtTime(160 + Math.random() * 90, t);
+          g.gain.setValueAtTime(0, t);
+          g.gain.linearRampToValueAtTime(0.018, t + 0.004);
+          g.gain.linearRampToValueAtTime(0, t + 0.028);
+          osc.connect(g);
+          g.connect(ctx.destination);
+          osc.start(t);
+          osc.stop(t + 0.032);
+          t += 0.042 + Math.random() * 0.035;
+        }
+        window.setTimeout(function () {
+          try {
+            ctx.close();
+          } catch (e2) {}
+        }, Math.max(0, (t - ctx.currentTime) * 1000) + 80);
+      };
+      if (ctx.state === "suspended") {
+        ctx.resume().then(start);
+      } else {
+        start();
+      }
+    } catch (e) {}
+  }
+
+  function clearEventBodyClasses() {
+    var body = document.body;
+    for (var i = 0; i < EVENT_BODY_CLASSES.length; i++) {
+      body.classList.remove(EVENT_BODY_CLASSES[i]);
+    }
+  }
+
+  /** Визуальные классы событий на body (не смешивать с игровой логикой). */
+  function syncEventFeedback() {
+    clearEventBodyClasses();
+    if (phase === "idle" || phase === "casting") return;
+    var map = {
+      noCatch: "event-no-catch",
+      smallCatch: "event-small-catch",
+      bite: "event-bite",
+      reeling: "event-reeling",
+      cashedOut: "event-win",
+      snapped: "event-snap",
+    };
+    var cls = map[phase];
+    if (cls) document.body.classList.add(cls);
+    if (phase === "reeling") {
+      var fightSec = reelWallStartMs ? (Date.now() - reelWallStartMs) / 1000 : 0;
+      if (fightSec > 2.2 && resistanceMeterPercent() > 72) {
+        document.body.classList.add("event-intense");
+      }
+    }
+  }
 
   /** Текущий выигрыш = ставка × множитель, без копеек */
   function currentWin() {
@@ -151,10 +248,28 @@
     return Math.min(crash, maxCrash);
   }
 
-  /** Натяжение 0–100 по формуле ТЗ */
-  function tensionPercent() {
-    if (phase !== "reeling" || crashPoint <= 0) return 0;
-    return Math.min(100, Math.max(0, (currentMultiplier / crashPoint) * 100));
+  /**
+   * Атмосферный индикатор «сопротивление»: crashPoint нигде не участвует.
+   * Зависит от времени борьбы, прироста множителя относительно старта рыбы, вида рыбы и фазы раунда.
+   * @returns {number} 0–100 для полоски UI (не расстояние и не доля пути до обрыва).
+   */
+  function resistanceMeterPercent() {
+    if (phase !== "reeling" || !currentFish || !reelWallStartMs) return 0;
+    var t = (Date.now() - reelWallStartMs) / 1000;
+    var sm = currentFish.startMultiplier;
+    var lift = Math.max(0, currentMultiplier - sm);
+    var r = resistanceVisualSeed;
+    var wobble =
+      Math.sin(t * 2.35 + r) * 26 +
+      Math.sin(t * 0.58 + r * 1.73) * 19 +
+      Math.sin(t * sm * 0.31 + r * 2.2) * 15;
+    var liftRipple = Math.sin(lift * 2.8 + t * 2.05 + sm * 0.42 + r) * 17;
+    var fishFight = Math.sin(t * sm * 0.21 + r * 2.2) * 14;
+    var elapsedPulse = Math.sin(t * 0.95 + r) * 12;
+    var timeStir = Math.min(24, t * 3.5);
+    var liftBias = Math.min(26, lift * (5 / sm));
+    var raw = 34 + timeStir + liftBias + wobble + liftRipple + fishFight + elapsedPulse;
+    return Math.min(100, Math.max(6, raw));
   }
 
   /** Классы режима игры на body (простая обратная связь) */
@@ -164,16 +279,17 @@
       "is-casting",
       "is-bite",
       "is-reeling",
-      "is-danger",
+      "is-intense",
       "is-win",
       "is-snap"
     );
-    const pct = tensionPercent();
+    var resistPct = resistanceMeterPercent();
     if (phase === "casting") body.classList.add("is-casting");
     if (phase === "bite") body.classList.add("is-bite");
     if (phase === "reeling") {
       body.classList.add("is-reeling");
-      if (pct >= 80) body.classList.add("is-danger");
+      var fs = reelWallStartMs ? (Date.now() - reelWallStartMs) / 1000 : 0;
+      if (fs > 2.2 && resistPct > 74) body.classList.add("is-intense");
     }
     if (phase === "cashedOut") body.classList.add("is-win");
     if (phase === "snapped") body.classList.add("is-snap");
@@ -277,26 +393,38 @@
     path.setAttribute("d", "M " + tipX + " " + tipY + " Q " + cx + " " + cy + " " + hookX + " " + hookY);
   }
 
-  /** Обновление шкалы натяжения и зон цвета */
-  function updateTensionVisual() {
-    els.tensionFill.classList.remove("tension-zone-low", "tension-zone-mid", "tension-zone-high");
+  /** Обновление индикатора «Сопротивление рыбы» (без crashPoint). */
+  function updateResistanceVisual() {
+    els.tensionFill.classList.remove(
+      "resist-band-soft",
+      "resist-band-medium",
+      "resist-band-high"
+    );
 
     if (phase !== "reeling") {
       els.tensionFill.style.width = "0%";
-      els.tensionNeedle.style.left = "0%";
-      if (els.waterZone) els.waterZone.classList.remove("danger");
+      if (els.waterZone) els.waterZone.classList.remove("resistance-intense");
+      if (els.resistanceHint) els.resistanceHint.textContent = "\u00a0";
       return;
     }
 
-    const pct = tensionPercent();
+    var pct = resistanceMeterPercent();
     els.tensionFill.style.width = pct + "%";
-    els.tensionNeedle.style.left = pct + "%";
 
-    if (pct < 50) els.tensionFill.classList.add("tension-zone-low");
-    else if (pct < 80) els.tensionFill.classList.add("tension-zone-mid");
-    else els.tensionFill.classList.add("tension-zone-high");
+    var hint = "";
+    if (pct < 38) {
+      els.tensionFill.classList.add("resist-band-soft");
+      hint = "Спокойное сопротивление";
+    } else if (pct < 62) {
+      els.tensionFill.classList.add("resist-band-medium");
+      hint = "Рыба сопротивляется";
+    } else {
+      els.tensionFill.classList.add("resist-band-high");
+      hint = "Сильные рывки";
+    }
+    if (els.resistanceHint) els.resistanceHint.textContent = hint;
 
-    if (els.waterZone) els.waterZone.classList.toggle("danger", pct >= 80);
+    if (els.waterZone) els.waterZone.classList.toggle("resistance-intense", pct > 73);
   }
 
   function renderRoundVisuals() {
@@ -326,21 +454,37 @@
       els.catchDisplay.textContent = "0 ₸";
     }
 
-    updateTensionVisual();
+    updateResistanceVisual();
 
-    const tNorm = tensionPercent() / 100;
+    var resistPct = resistanceMeterPercent();
+    var rNorm = resistPct / 100;
+    if (reeling) {
+      var fightSecForVib = reelWallStartMs ? (Date.now() - reelWallStartMs) / 1000 : 0;
+      if (fightSecForVib > 2 && resistPct > 82) {
+        if (resistanceSpikeVibratePrimed) {
+          resistanceSpikeVibratePrimed = false;
+          triggerVibration([52]);
+        }
+      } else if (resistPct < 62) {
+        resistanceSpikeVibratePrimed = true;
+      }
+    }
+
     if (els.lineWrap) els.lineWrap.classList.toggle("shake", reeling);
-    els.btnCash.classList.toggle("pulse-high", reeling && tensionPercent() >= 75);
+    els.btnCash.classList.toggle(
+      "pulse-high",
+      reeling && currentFish && currentMultiplier > currentFish.startMultiplier * 1.12
+    );
 
     if (els.rodRig) {
       els.rodRig.classList.toggle("fp-rig--active", reeling || bite);
       els.rodRig.classList.toggle("fp-rig--bite", bite);
-      els.rodRig.classList.toggle("fp-rig--bent", reeling && tNorm > 0.35);
-      els.rodRig.classList.toggle("fp-rig--bent-hard", reeling && tNorm > 0.72);
+      els.rodRig.classList.toggle("fp-rig--bent", reeling && rNorm > 0.38);
+      els.rodRig.classList.toggle("fp-rig--bent-hard", reeling && rNorm > 0.72);
     }
 
     let lineTension = 0;
-    if (reeling) lineTension = tNorm;
+    if (reeling) lineTension = rNorm;
     else if (bite) lineTension = 0.22;
     updateFishingLine(lineTension, phase);
 
@@ -349,10 +493,16 @@
       syncFishLine();
     }
 
+    if (els.biteCallout) {
+      els.biteCallout.classList.toggle("bite-callout--show", bite);
+    }
+
     syncBodyClasses();
+    syncEventFeedback();
   }
 
   function flash(el, ms) {
+    if (!el) return;
     el.classList.add("show");
     window.setTimeout(function () {
       el.classList.remove("show");
@@ -451,10 +601,13 @@
     crashPoint = Infinity;
     betLocked = 0;
     currentMultiplier = 1;
+    resistanceSpikeVibratePrimed = true;
+    reelWallStartMs = 0;
+    resistanceVisualSeed = 0;
 
     els.fishSilhouette.classList.remove("visible");
     if (els.lineWrap) els.lineWrap.classList.remove("shake", "snap", "line-fp--taut");
-    if (els.waterZone) els.waterZone.classList.remove("danger", "risk-shake");
+    if (els.waterZone) els.waterZone.classList.remove("resistance-intense", "risk-shake");
     els.btnCash.classList.remove("pulse-high");
     if (els.rodRig) {
       els.rodRig.classList.remove(
@@ -470,17 +623,19 @@
     els.catchDisplay.textContent = "0 ₸";
     els.fishLine.innerHTML = "&nbsp;";
     els.tensionFill.style.width = "0%";
-    els.tensionNeedle.style.left = "0%";
-    els.tensionFill.classList.remove("tension-zone-low", "tension-zone-mid", "tension-zone-high");
+    els.tensionFill.classList.remove("resist-band-soft", "resist-band-medium", "resist-band-high");
+    if (els.resistanceHint) els.resistanceHint.innerHTML = "&nbsp;";
 
     document.body.classList.remove(
       "is-casting",
       "is-bite",
       "is-reeling",
-      "is-danger",
+      "is-intense",
       "is-win",
       "is-snap"
     );
+    clearEventBodyClasses();
+    if (els.biteCallout) els.biteCallout.classList.remove("bite-callout--show");
 
     clampBet();
     refreshMoneyUI();
@@ -497,12 +652,15 @@
     const dt = Math.min(32, ts - lastTs) / 1000;
     lastTs = ts;
 
-    const elapsed = (ts - reelStartTs) / 1000;
+    var elapsed = (ts - reelStartTs) / 1000;
     const sm = currentFish ? currentFish.startMultiplier : 1;
     const base = 0.028 * sm;
     const accel = 0.011 * sm;
-    const dangerBoost = (tensionPercent() / 100) * 0.06 * sm;
-    const deltaMult = (base + accel * elapsed + dangerBoost) * dt;
+    var tFight = reelWallStartMs ? (Date.now() - reelWallStartMs) / 1000 : 0;
+    /* Ускорение роста множителя: только время и «борьба», без crashPoint. */
+    var struggleBoost =
+      (0.38 + 0.62 * Math.sin(tFight * sm * 0.19 + resistanceVisualSeed)) * 0.048 * sm;
+    const deltaMult = (base + accel * elapsed + struggleBoost) * dt;
 
     currentMultiplier += deltaMult;
 
@@ -536,6 +694,7 @@
 
     els.catchDisplay.textContent = "0 ₸";
     flash(els.flashRed, 380);
+    triggerVibration([180]);
 
     if (els.rodRig) {
       els.rodRig.classList.remove(
@@ -569,7 +728,7 @@
     els.btnCast.disabled = true;
     els.btnCash.disabled = true;
     if (els.lineWrap) els.lineWrap.classList.remove("shake");
-    if (els.waterZone) els.waterZone.classList.remove("danger", "risk-shake");
+    if (els.waterZone) els.waterZone.classList.remove("resistance-intense", "risk-shake");
     els.btnCash.classList.remove("pulse-high");
 
     if (els.rodRig) {
@@ -582,6 +741,7 @@
     }
 
     flash(els.flashGold, 380);
+    triggerVibration([80, 50, 120]);
     updateFishingLine(0, "cashedOut");
 
     const name = currentFish ? currentFish.name : "";
@@ -610,6 +770,9 @@
     currentMultiplier = currentFish.startMultiplier;
     phase = "reeling";
     reelStartTs = 0;
+    reelWallStartMs = Date.now();
+    resistanceVisualSeed = Math.random() * Math.PI * 2;
+    resistanceSpikeVibratePrimed = true;
 
     els.multDisplay.classList.remove("dim");
     els.fishSilhouette.classList.add("visible");
@@ -659,6 +822,7 @@
       if (outcome.type === "noCatch") {
         phase = "noCatch";
         currentMultiplier = 1;
+        playReelWindTicks();
         pushHistory("<span>Пусто −" + formatMoney(betLocked) + " ₸</span>", "hist-empty");
         syncButtons();
         syncStatusText();
@@ -676,6 +840,7 @@
         currentMultiplier = 0.3 + Math.random() * 0.5;
         var smallWin = Math.floor(betLocked * currentMultiplier);
         balance += smallWin;
+        if (els.flashSoftCyan) flash(els.flashSoftCyan, 260);
         pushHistory(
           "<span>Мелочь x" +
             currentMultiplier.toFixed(2) +
@@ -699,6 +864,8 @@
       currentFish = pickFish();
       phase = "bite";
       currentMultiplier = currentFish.startMultiplier;
+      if (els.flashBite) flash(els.flashBite, 320);
+      triggerVibration([100, 40, 140]);
 
       syncButtons();
       syncStatusText();
