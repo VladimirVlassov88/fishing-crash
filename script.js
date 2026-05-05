@@ -2,15 +2,16 @@
   "use strict";
 
   /**
-   * @typedef {'idle'|'casting'|'bite'|'reeling'|'cashedOut'|'snapped'} GameState
+   * @typedef {'idle'|'casting'|'noCatch'|'smallCatch'|'bite'|'reeling'|'cashedOut'|'snapped'} GameState
    * @typedef {{ id: string, name: string, chance: number, startMultiplier: number, color: string }} FishType
    */
 
+  /** Панель «Рыбы» и pickFish(): доли внутри исхода fish (50+30+12+6+2 = 100%). */
   const fishTypes = [
-    { id: "crucian", name: "Карась", chance: 45, startMultiplier: 1.2, color: "green" },
+    { id: "crucian", name: "Карась", chance: 50, startMultiplier: 1.2, color: "green" },
     { id: "perch", name: "Окунь", chance: 30, startMultiplier: 2, color: "blue" },
-    { id: "pike", name: "Щука", chance: 15, startMultiplier: 3.5, color: "purple" },
-    { id: "catfish", name: "Сом", chance: 8, startMultiplier: 6, color: "orange" },
+    { id: "pike", name: "Щука", chance: 12, startMultiplier: 3.5, color: "purple" },
+    { id: "catfish", name: "Сом", chance: 6, startMultiplier: 6, color: "orange" },
     { id: "goldfish", name: "Золотая рыба", chance: 2, startMultiplier: 10, color: "gold" },
   ];
 
@@ -19,8 +20,10 @@
   const BET_STEP = 100;
   const START_BALANCE = 10000;
   const HISTORY_CAP = 8;
-  /** Пауза перед возвратом в idle после исхода раунда */
+  /** Пауза перед возвратом в idle после краша / ручного садка */
   const ROUND_END_MS = 1500;
+  /** Пустой заброс и мелкий клёв: ровно 1.2 с перед idle */
+  const MINOR_ROUND_MS = 1200;
   /** Максимальный множитель обрыва в прототипе */
   const CRASH_MULT_CAP = 20;
 
@@ -73,12 +76,6 @@
   /** Время старта фазы reeling (для ускорения роста) */
   let reelStartTs = 0;
 
-  /** Стартовый выигрыш в ₸ при текущей ставке и рыбе */
-  function startWinAmount() {
-    if (!currentFish || !betLocked) return 0;
-    return Math.floor(betLocked * currentFish.startMultiplier);
-  }
-
   /** Текущий выигрыш = ставка × множитель, без копеек */
   function currentWin() {
     return Math.floor(betLocked * currentMultiplier);
@@ -110,10 +107,21 @@
     els.betDisplayTop.textContent = formatMoney(bet);
   }
 
-  /** Случайная рыба по полю chance */
+  /**
+   * Исход заброса после casting: 40% пусто, 20% мелочь, 40% рыба (вид — только через pickFish()).
+   * @returns {{ type: 'noCatch' } | { type: 'smallCatch' } | { type: 'fish' }}
+   */
+  function rollCastOutcome() {
+    const r = Math.random() * 100;
+    if (r < 40) return { type: "noCatch" };
+    if (r < 60) return { type: "smallCatch" };
+    return { type: "fish" };
+  }
+
+  /** Случайная рыба по полю chance (только при outcome.type === "fish"). */
   function pickFish() {
-    const total = fishTypes.reduce(function (s, f) {
-      return s + f.chance;
+    const total = fishTypes.reduce(function (sum, f) {
+      return sum + f.chance;
     }, 0);
     let r = Math.random() * total;
     for (let i = 0; i < fishTypes.length; i++) {
@@ -180,13 +188,31 @@
       case "casting":
         els.statusText.textContent = "Заброс удочки...";
         break;
+      case "noCatch":
+        els.statusText.textContent = "Пустой заброс. Рыба не клюнула.";
+        break;
+      case "smallCatch":
+        els.statusText.textContent =
+          "Мелкий клёв. Возврат " + formatMoney(currentWin()) + " ₸";
+        break;
       case "bite":
-        els.statusText.textContent = "КЛЁВ!";
+        if (currentFish) {
+          els.statusText.textContent =
+            currentFish.name +
+            " на крючке — " +
+            formatMoney(currentWin()) +
+            " ₸. Забери в садок или тяни дальше.";
+        } else {
+          els.statusText.textContent = "КЛЁВ!";
+        }
         break;
       case "reeling":
         if (currentFish) {
           els.statusText.textContent =
-            currentFish.name + " на крючке — забери в садок или тяни дальше.";
+            currentFish.name +
+            " на крючке — " +
+            formatMoney(currentWin()) +
+            " ₸. Забери в садок или тяни дальше.";
         }
         break;
       case "cashedOut":
@@ -205,7 +231,7 @@
     if (phase === "bite" || phase === "reeling") {
       if (currentFish) {
         els.fishLine.textContent =
-          currentFish.name + " на крючке — " + formatMoney(startWinAmount()) + " ₸";
+          currentFish.name + " на крючке — " + formatMoney(currentWin()) + " ₸";
       }
       return;
     }
@@ -230,6 +256,8 @@
     if (
       phaseKey === "idle" ||
       phaseKey === "casting" ||
+      phaseKey === "noCatch" ||
+      phaseKey === "smallCatch" ||
       phaseKey === "cashedOut" ||
       phaseKey === "snapped"
     ) {
@@ -281,6 +309,14 @@
 
     if (reeling || bite) {
       els.catchDisplay.textContent = formatMoney(currentWin()) + " ₸";
+    } else if (phase === "smallCatch") {
+      els.multDisplay.textContent = formatMult(currentMultiplier);
+      els.multDisplay.classList.remove("dim");
+      els.catchDisplay.textContent = formatMoney(currentWin()) + " ₸";
+    } else if (phase === "noCatch") {
+      els.multDisplay.textContent = formatMult(1);
+      els.multDisplay.classList.add("dim");
+      els.catchDisplay.textContent = "0 ₸";
     } else if (
       phase === "idle" ||
       phase === "casting" ||
@@ -307,6 +343,11 @@
     if (reeling) lineTension = tNorm;
     else if (bite) lineTension = 0.22;
     updateFishingLine(lineTension, phase);
+
+    if (bite || reeling) {
+      syncStatusText();
+      syncFishLine();
+    }
 
     syncBodyClasses();
   }
@@ -611,6 +652,50 @@
     window.setTimeout(function () {
       if (phase !== "casting") return;
 
+      currentFish = null;
+      var outcome = rollCastOutcome();
+      console.log("Cast outcome:", outcome.type);
+
+      if (outcome.type === "noCatch") {
+        phase = "noCatch";
+        currentMultiplier = 1;
+        pushHistory("<span>Пусто −" + formatMoney(betLocked) + " ₸</span>", "hist-empty");
+        syncButtons();
+        syncStatusText();
+        syncFishLine();
+        renderRoundVisuals();
+        window.setTimeout(function () {
+          if (phase !== "noCatch") return;
+          enterIdle();
+        }, MINOR_ROUND_MS);
+        return;
+      }
+
+      if (outcome.type === "smallCatch") {
+        phase = "smallCatch";
+        currentMultiplier = 0.3 + Math.random() * 0.5;
+        var smallWin = Math.floor(betLocked * currentMultiplier);
+        balance += smallWin;
+        pushHistory(
+          "<span>Мелочь x" +
+            currentMultiplier.toFixed(2) +
+            " +" +
+            formatMoney(smallWin) +
+            " ₸</span>",
+          "hist-small"
+        );
+        refreshMoneyUI();
+        syncButtons();
+        syncStatusText();
+        syncFishLine();
+        renderRoundVisuals();
+        window.setTimeout(function () {
+          if (phase !== "smallCatch") return;
+          enterIdle();
+        }, MINOR_ROUND_MS);
+        return;
+      }
+
       currentFish = pickFish();
       phase = "bite";
       currentMultiplier = currentFish.startMultiplier;
@@ -700,6 +785,13 @@
   renderRoundVisuals();
 
   window.setInterval(function () {
-    if (phase === "idle" || phase === "casting") updateFishingLine(0, phase);
+    if (
+      phase === "idle" ||
+      phase === "casting" ||
+      phase === "noCatch" ||
+      phase === "smallCatch"
+    ) {
+      updateFishingLine(0, phase);
+    }
   }, 120);
 })();
