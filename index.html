@@ -44,16 +44,45 @@
           <div class="murk"></div>
           <div class="particles"></div>
           <div class="beam"></div>
-          <div class="fish-silhouette" id="fishSilhouette">
-            <img src="assets/fish-silhouette.svg" alt="" width="180" height="72" />
+          <!-- В покое: тот же силуэт, очень слабо; при клёве скрывается (основной блок в #fishSilhouette) -->
+          <div class="fish-presence-idle" aria-hidden="true">
+            <div class="fish-underwater-motion fish-underwater-motion--idle">
+              <img
+                class="fish-underwater-shape fish-underwater-shape--idle"
+                src="assets/fish-silhouette.svg"
+                alt=""
+                width="220"
+                height="90"
+                decoding="async"
+              />
+            </div>
+          </div>
+          <div class="fish-silhouette" id="fishSilhouette" aria-hidden="true">
+            <div class="fish-underwater-motion">
+              <img
+                class="fish-underwater-shape"
+                src="assets/fish-silhouette.svg"
+                alt=""
+                width="220"
+                height="90"
+                decoding="async"
+              />
+            </div>
           </div>
         </div>
       </div>
-      <div class="water-ripple" aria-hidden="true">
-        <span class="water-ripple__core"></span>
-        <span class="water-ripple__ring"></span>
-        <span class="water-ripple__ring"></span>
-        <span class="water-ripple__ring"></span>
+      <!-- Точка на воде без wake/trail (без световых пятен) -->
+      <div class="water-surface-struggle" aria-hidden="true">
+        <div class="water-struggle-motion">
+          <div class="moving-ripple-point">
+            <div class="water-ripple" aria-hidden="true">
+              <span class="water-ripple__core"></span>
+              <span class="water-ripple__ring"></span>
+              <span class="water-ripple__ring"></span>
+              <span class="water-ripple__ring"></span>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="bite-splash" id="biteSplash" aria-hidden="true">
         <div class="bite-splash__stage">
@@ -128,32 +157,86 @@
       <aside class="panel panel-left glass">
         <h2>РЫБЫ</h2>
         <div class="fish-row fish-row--malek">
-          <img class="fish-icon fish-icon--panel" data-fish-game-id="malek" src="./assets/fish/fish_malek.png" alt="Малёк" loading="eager" decoding="async" />
+          <span class="fish-icon-host fish-icon-host--panel">
+            <span class="fish-icon-skeleton fish-icon-skeleton--panel" aria-hidden="true"></span>
+            <img
+              class="fish-icon fish-icon--panel"
+              data-fish-game-id="malek"
+              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+              alt="Малёк"
+              decoding="async"
+            />
+          </span>
           <span class="fish-row__name">Малёк</span>
           <span class="fish-meta">×0.3–×0.8 · возврат</span>
         </div>
         <div class="fish-row crucian">
-          <img class="fish-icon fish-icon--panel" data-fish-game-id="crucian" src="./assets/fish/fish_karas.png" alt="Карась" loading="eager" decoding="async" />
+          <span class="fish-icon-host fish-icon-host--panel">
+            <span class="fish-icon-skeleton fish-icon-skeleton--panel" aria-hidden="true"></span>
+            <img
+              class="fish-icon fish-icon--panel"
+              data-fish-game-id="crucian"
+              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+              alt="Карась"
+              decoding="async"
+            />
+          </span>
           <span class="fish-row__name">Карась</span>
           <span class="fish-meta">×1.2</span>
         </div>
         <div class="fish-row perch">
-          <img class="fish-icon fish-icon--panel" data-fish-game-id="perch" src="./assets/fish/fish_okun.png" alt="Окунь" loading="eager" decoding="async" />
+          <span class="fish-icon-host fish-icon-host--panel">
+            <span class="fish-icon-skeleton fish-icon-skeleton--panel" aria-hidden="true"></span>
+            <img
+              class="fish-icon fish-icon--panel"
+              data-fish-game-id="perch"
+              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+              alt="Окунь"
+              decoding="async"
+            />
+          </span>
           <span class="fish-row__name">Окунь</span>
           <span class="fish-meta">×2</span>
         </div>
         <div class="fish-row pike">
-          <img class="fish-icon fish-icon--panel" data-fish-game-id="pike" src="./assets/fish/fish_shuka.png" alt="Щука" loading="eager" decoding="async" />
+          <span class="fish-icon-host fish-icon-host--panel">
+            <span class="fish-icon-skeleton fish-icon-skeleton--panel" aria-hidden="true"></span>
+            <img
+              class="fish-icon fish-icon--panel"
+              data-fish-game-id="pike"
+              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+              alt="Щука"
+              decoding="async"
+            />
+          </span>
           <span class="fish-row__name">Щука</span>
           <span class="fish-meta">×3.5</span>
         </div>
         <div class="fish-row catfish">
-          <img class="fish-icon fish-icon--panel" data-fish-game-id="catfish" src="./assets/fish/fish_som.png" alt="Сом" loading="eager" decoding="async" />
+          <span class="fish-icon-host fish-icon-host--panel">
+            <span class="fish-icon-skeleton fish-icon-skeleton--panel" aria-hidden="true"></span>
+            <img
+              class="fish-icon fish-icon--panel"
+              data-fish-game-id="catfish"
+              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+              alt="Сом"
+              decoding="async"
+            />
+          </span>
           <span class="fish-row__name">Сом</span>
           <span class="fish-meta">×6</span>
         </div>
         <div class="fish-row goldfish">
-          <img class="fish-icon fish-icon--panel" data-fish-game-id="goldfish" src="./assets/fish/fish_gold.png" alt="Золотая рыба" loading="eager" decoding="async" />
+          <span class="fish-icon-host fish-icon-host--panel">
+            <span class="fish-icon-skeleton fish-icon-skeleton--panel" aria-hidden="true"></span>
+            <img
+              class="fish-icon fish-icon--panel"
+              data-fish-game-id="goldfish"
+              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+              alt="Золотая рыба"
+              decoding="async"
+            />
+          </span>
           <span class="fish-row__name">Золотая рыба</span>
           <span class="fish-meta">×10</span>
         </div>

@@ -1045,6 +1045,7 @@
 
     els.btnCast.disabled = true;
     els.btnCash.disabled = true;
+    if (els.fishSilhouette) els.fishSilhouette.classList.remove("visible");
     if (els.lineWrap) els.lineWrap.classList.remove("shake");
     if (els.lineWrap) els.lineWrap.classList.add("snap");
     window.setTimeout(resetLineSnapClass, 400);
@@ -1084,6 +1085,7 @@
 
     els.btnCast.disabled = true;
     els.btnCash.disabled = true;
+    if (els.fishSilhouette) els.fishSilhouette.classList.remove("visible");
     if (els.lineWrap) els.lineWrap.classList.remove("shake");
     if (els.waterZone) els.waterZone.classList.remove("resistance-intense", "risk-shake");
     els.btnCash.classList.remove("pulse-high");
@@ -1229,6 +1231,7 @@
       if (els.flashBite) flash(els.flashBite, 320);
       triggerVibration([100, 40, 140]);
       triggerBiteSplashEffects();
+      if (els.fishSilhouette) els.fishSilhouette.classList.add("visible");
 
       syncButtons();
       syncStatusText();

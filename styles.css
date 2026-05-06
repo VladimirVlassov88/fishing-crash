@@ -249,11 +249,12 @@ body.bite-shake .scene-back {
   opacity: 0.9;
 }
 
+/* Нижняя игровая зона (ripple / bite / силуэт): приподнята от низа вьюпорта ~56px */
 .lake {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: clamp(40px, 5.5vh, 70px);
   height: 38%;
   pointer-events: none;
 }
@@ -391,29 +392,164 @@ body.bite-shake .scene-back {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
 }
 
-/* Мягкий ripple на ночной воде: эллипс, без неона/HUD */
-.lake .water-ripple {
+/* Точка на воде: без wake/trail и без световых пятен на поверхности */
+.lake .water-surface-struggle {
   position: absolute;
   left: 50%;
   bottom: 46%;
-  width: clamp(68px, 20vw, 105px);
-  height: clamp(68px, 20vw, 105px);
-  transform: translateX(-50%) scaleY(0.74);
-  transform-origin: center 62%;
+  width: clamp(200px, 54vw, 330px);
+  height: clamp(92px, 21vw, 155px);
+  transform: translateX(-50%);
   z-index: 3;
   pointer-events: none;
-  visibility: hidden;
+}
+
+.lake .water-struggle-motion {
+  position: absolute;
+  inset: 0;
+  transform: scaleY(0.74);
+  transform-origin: center 62%;
+  opacity: 1;
+  transition: opacity 0.68s ease;
+  --surface-drift-reel: clamp(3px, 0.65vw, 8px);
+  --surface-drift-bite: clamp(2px, 0.45vw, 5px);
+}
+
+body.is-win .lake .water-struggle-motion,
+body.is-snap .lake .water-struggle-motion {
+  opacity: 0;
+}
+
+/* Подводная «пыль» и каустики на границе зоны дают мерцание — стабилизируем при клёве/борьбе */
+body.is-bite #waterZone .particles,
+body.is-reeling #waterZone .particles {
+  animation: none;
+}
+
+body.is-bite .above-water .caustics,
+body.is-reeling .above-water .caustics {
+  animation: none;
+}
+
+/* Силуэт внутри waterZone не должен таскать всю подложку глазами */
+body.is-bite #fishSilhouette .fish-underwater-motion,
+body.is-reeling #fishSilhouette .fish-underwater-motion {
+  animation: none;
+  transform: translateX(0) scale(1.369);
+}
+
+.lake .moving-ripple-point {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: clamp(68px, 20vw, 105px);
+  height: clamp(68px, 20vw, 105px);
+  transform: translate(-50%, -50%);
+  transform-origin: center center;
+  z-index: 2;
+  pointer-events: none;
 }
 
 @media (min-width: 901px) {
-  .lake .water-ripple {
+  .lake .moving-ripple-point {
     width: clamp(96px, 10vw, 148px);
     height: clamp(96px, 10vw, 148px);
   }
 }
 
-body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap) .lake .water-ripple {
+.lake .moving-ripple-point .water-ripple {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: none;
+  transform-origin: center center;
+  z-index: 2;
+  pointer-events: none;
   visibility: visible;
+}
+
+/* Слабый сдвиг только точки — без следов на воде */
+body.is-reeling .lake .moving-ripple-point {
+  animation: surfacePointDriftReel 1.65s ease-in-out infinite alternate;
+}
+
+body.is-bite .lake .moving-ripple-point {
+  animation: surfacePointDriftBite 1.45s ease-in-out infinite alternate;
+}
+
+@keyframes surfacePointDriftReel {
+  from {
+    transform: translate(calc(-50% - var(--surface-drift-reel)), -50%);
+  }
+  to {
+    transform: translate(calc(-50% + var(--surface-drift-reel)), -50%);
+  }
+}
+
+@keyframes surfacePointDriftBite {
+  from {
+    transform: translate(calc(-50% - var(--surface-drift-bite)), -50%);
+  }
+  to {
+    transform: translate(calc(-50% + var(--surface-drift-bite)), -50%);
+  }
+}
+
+body.is-win .lake .moving-ripple-point,
+body.is-snap .lake .moving-ripple-point {
+  animation: none !important;
+}
+
+/* Bite/reeling: чуть заметнее ядро, без прожекторных ореолов */
+body.is-bite .water-ripple__core {
+  background: radial-gradient(
+    circle at 45% 42%,
+    rgba(208, 232, 246, 0.095) 0%,
+    rgba(168, 205, 228, 0.042) 40%,
+    transparent 72%
+  );
+  box-shadow: none;
+}
+
+body.is-reeling .water-ripple__core {
+  background: radial-gradient(
+    circle at 45% 42%,
+    rgba(210, 234, 248, 0.085) 0%,
+    rgba(165, 202, 228, 0.038) 42%,
+    transparent 74%
+  );
+  box-shadow: none;
+}
+
+body.is-bite .water-ripple__ring,
+body.is-reeling .water-ripple__ring {
+  border-color: rgba(158, 198, 218, 0.22);
+  box-shadow: none;
+}
+
+body.is-bite .water-ripple__ring {
+  animation-duration: 3.2s;
+}
+
+body.is-reeling .water-ripple__ring {
+  animation-duration: 3.85s;
+}
+
+/* Idle: только едва заметное ядро, без разъезжающихся колец */
+body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
+  .lake
+  .moving-ripple-point
+  .water-ripple__ring {
+  animation: none;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.is-reeling .lake .moving-ripple-point,
+  body.is-bite .lake .moving-ripple-point {
+    animation: none;
+  }
 }
 
 .water-ripple__core {
@@ -763,6 +899,7 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap) .lake .water-ripp
   height: 42%;
   background: transparent;
   overflow: hidden;
+  z-index: 2;
 }
 
 .caustics {
@@ -832,6 +969,7 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap) .lake .water-ripp
   right: 0;
   bottom: 0;
   top: 38%;
+  z-index: 1;
   /* Слабее базовая подложка — без ощущения отдельного прямоугольника */
   background: linear-gradient(
     180deg,
@@ -844,16 +982,8 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap) .lake .water-ripp
 
 .underwater#waterZone.resistance-intense {
   box-shadow:
-    inset 0 0 52px rgba(56, 214, 255, 0.26),
-    inset 0 -14px 42px rgba(110, 72, 200, 0.18);
-  animation: underwaterChurnIntense 0.11s linear infinite;
-}
-
-@keyframes underwaterChurnIntense {
-  0%, 100% { transform: translate(0, 0); }
-  25% { transform: translate(-2px, 1px); }
-  50% { transform: translate(2px, -2px); }
-  75% { transform: translate(-1px, -1px); }
+    inset 0 0 30px rgba(56, 214, 255, 0.07),
+    inset 0 -9px 26px rgba(110, 72, 200, 0.045);
 }
 
 .depth-gradient {
@@ -906,30 +1036,135 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap) .lake .water-ripp
   opacity: 0.65;
 }
 
+/* ---------- Подводное присутствие: читаемый силуэт рыбы (SVG + CSS blur), без голубых пятен ---------- */
+
+.fish-presence-idle {
+  position: absolute;
+  left: 50%;
+  top: 26%;
+  transform: translate(-50%, -50%);
+  width: min(54vw, 300px);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.85s ease;
+}
+
+body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap) .fish-presence-idle {
+  opacity: 1;
+}
+
 .fish-silhouette {
   position: absolute;
   left: 50%;
-  top: 42%;
+  top: 26%;
   transform: translate(-50%, -50%);
+  width: min(54vw, 300px);
+  pointer-events: none;
+  z-index: 2;
   opacity: 0;
-  transition: opacity 0.45s ease;
-  filter: drop-shadow(0 0 16px rgba(56, 214, 255, 0.22));
+  transition: opacity 0.75s ease;
 }
 
 .fish-silhouette.visible {
-  opacity: 0.92;
+  opacity: 1;
 }
 
-.fish-silhouette img {
-  width: min(42vw, 220px);
+/* Общий drift / лёгкий pulse масштаба */
+.fish-underwater-motion {
+  transform-origin: 52% 50%;
+  animation: underwaterPresenceMotion 9s ease-in-out infinite;
+}
+
+.fish-underwater-motion--idle {
+  animation-duration: 13s;
+  animation-timing-function: ease-in-out;
+}
+
+@keyframes underwaterPresenceMotion {
+  0%, 100% {
+    transform: translateX(-12px) scale(1.36);
+  }
+  50% {
+    transform: translateX(12px) scale(1.402);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fish-underwater-motion,
+  .fish-underwater-motion--idle {
+    animation: none;
+    transform: scale(1.36);
+  }
+
+  .fish-underwater-motion--idle {
+    transform: scale(1.22);
+  }
+}
+
+/* Тёмно-синий полупрозрачный силуэт; края смягчает blur (не «картинка», не UI) */
+.fish-underwater-shape {
+  display: block;
+  width: 100%;
+  max-width: min(52vw, 286px);
   height: auto;
-  opacity: 0.88;
-  animation: fishBob 3.8s ease-in-out infinite;
+  margin: 0 auto;
+  opacity: 0;
+  transform-origin: center center;
+  transition: opacity 0.55s ease, filter 0.55s ease;
+  mix-blend-mode: multiply;
+  filter:
+    blur(3.5px)
+    brightness(0.62)
+    contrast(1.06)
+    saturate(1.12)
+    drop-shadow(0 8px 20px rgba(4, 14, 28, 0.52));
 }
 
-@keyframes fishBob {
-  0%, 100% { transform: translateY(0) rotate(-2deg); }
-  50% { transform: translateY(-10px) rotate(2deg); }
+/* Reeling: 0.22–0.32 */
+.fish-silhouette.visible .fish-underwater-shape {
+  opacity: 0.27;
+}
+
+/* Bite: заметнее 0.35–0.45 */
+body.is-bite .fish-silhouette.visible .fish-underwater-shape {
+  opacity: 0.4;
+}
+
+body.is-reeling .fish-silhouette.visible .fish-underwater-shape {
+  opacity: 0.27;
+  filter:
+    blur(4px)
+    brightness(0.58)
+    contrast(1.05)
+    saturate(1.08)
+    drop-shadow(0 10px 22px rgba(4, 12, 24, 0.48));
+}
+
+/* Idle: тот же силуэт, 0.08–0.12 */
+.fish-underwater-shape--idle {
+  max-width: min(46vw, 248px);
+  opacity: 0.1;
+  mix-blend-mode: multiply;
+  filter:
+    blur(4px)
+    brightness(0.55)
+    contrast(1.03)
+    saturate(1.05)
+    drop-shadow(0 6px 16px rgba(4, 14, 26, 0.42));
+}
+
+.fish-underwater-motion--idle {
+  animation-name: underwaterPresenceMotionIdle;
+}
+
+@keyframes underwaterPresenceMotionIdle {
+  0%, 100% {
+    transform: translateX(-8px) scale(1.2);
+  }
+  50% {
+    transform: translateX(8px) scale(1.228);
+  }
 }
 
 /* ---------- Леска FP ---------- */
@@ -1209,28 +1444,6 @@ body.event-small-catch .splash-ring--mid {
   }
 }
 
-body.event-bite .lake {
-  animation: biteSceneNudge 0.24s ease-in-out 6;
-}
-
-@keyframes biteSceneNudge {
-  0%, 100% { transform: translate(0, 0); }
-  35% { transform: translate(-3px, 2px); }
-  70% { transform: translate(4px, -3px); }
-}
-
-body.event-bite #waterZone {
-  box-shadow:
-    inset 0 0 48px rgba(56, 214, 255, 0.22),
-    inset 0 -8px 36px rgba(238, 207, 82, 0.08);
-  animation: biteWaterJolt 0.18s ease-in-out 6;
-}
-
-@keyframes biteWaterJolt {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-2px, 2px); }
-}
-
 body.event-bite .splash-core {
   animation: splashBiteBurst 0.55s cubic-bezier(0.33, 1.3, 0.52, 1) forwards;
 }
@@ -1276,33 +1489,20 @@ body.event-reeling .lake {
   animation: none;
 }
 
-/* Лёгкая «борьба»: фоновая дрожь воды; при высоком атмосферном «сопротивлении» — бурление (не намёк на crash). */
 body.event-reeling #waterZone:not(.resistance-intense) {
-  animation: reelingWaterTremor 0.36s ease-in-out infinite;
-}
-
-@keyframes reelingWaterTremor {
-  0%, 100% { transform: translate(0, 0); }
-  33% { transform: translate(-1px, 0.8px); }
-  66% { transform: translate(0.9px, -0.7px); }
+  animation: none;
 }
 
 body.event-intense #waterZone.resistance-intense {
-  animation: fightWaterSurge 0.085s linear infinite !important;
+  animation: none !important;
   box-shadow:
-    inset 0 0 72px rgba(56, 214, 255, 0.38),
-    inset 0 -18px 48px rgba(130, 88, 228, 0.28) !important;
+    inset 0 0 36px rgba(56, 214, 255, 0.09),
+    inset 0 -10px 30px rgba(130, 88, 228, 0.065);
 }
 
-@keyframes fightWaterSurge {
-  0%, 100% { transform: translate(0, 0); }
-  25% { transform: translate(-4px, 3px); }
-  50% { transform: translate(3px, -3px); }
-  75% { transform: translate(4px, 2px); }
-}
-
+/* Без фильтра на всём озере — резкий порог intense давал «мигание» прямоугольника воды */
 body.event-intense .lake {
-  filter: brightness(1.03) saturate(1.16);
+  filter: none;
 }
 
 body.event-intense .hud-status {
@@ -1579,9 +1779,9 @@ body.event-snap .lake {
 }
 
 .fish-icon-fallback--reward {
-  width: clamp(32px, 9vw, 48px);
-  height: clamp(32px, 9vw, 48px);
-  font-size: clamp(1.2rem, 5vw, 1.6rem);
+  width: clamp(44px, 5.5vw, 60px);
+  height: clamp(44px, 5.5vw, 60px);
+  font-size: clamp(1.35rem, 4vw, 1.85rem);
 }
 
 .main-grid {
@@ -1891,6 +2091,35 @@ body.event-snap .lake {
   overflow-y: auto;
 }
 
+/* Вертикальный скролл списка «Последние раунды» (#historyPanel .hist-list) */
+#historyPanel .hist-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(110, 150, 210, 0.35) rgba(5, 15, 35, 0.65);
+}
+
+#historyPanel .hist-list::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+#historyPanel .hist-list::-webkit-scrollbar-track {
+  background: rgba(5, 15, 35, 0.65);
+  border-radius: 999px;
+}
+
+#historyPanel .hist-list::-webkit-scrollbar-thumb {
+  background: rgba(110, 150, 210, 0.35);
+  border-radius: 999px;
+}
+
+#historyPanel .hist-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(150, 190, 255, 0.5);
+}
+
+#historyPanel .hist-list::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 .hist-item {
   display: flex;
   align-items: center;
@@ -2046,7 +2275,7 @@ body.event-snap .lake {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: clamp(12px, 2.8vw, 18px);
   padding: 12px 22px;
   border-radius: 999px;
   transform: scale(0.92) translateZ(0);
@@ -2081,12 +2310,13 @@ body.event-snap .lake {
 }
 
 .reward-popup__fish {
-  width: clamp(32px, 9vw, 48px);
-  height: clamp(32px, 9vw, 48px);
+  width: clamp(44px, 5.5vw, 60px);
+  height: clamp(44px, 5.5vw, 60px);
+  align-self: center;
   filter:
-    brightness(1.08) contrast(1.08) saturate(1.05)
-    drop-shadow(0 0 12px rgba(140, 230, 255, 0.55))
-    drop-shadow(0 3px 10px rgba(0, 0, 0, 0.55));
+    brightness(1.11) contrast(1.06) saturate(1.08)
+    drop-shadow(0 0 14px rgba(150, 235, 255, 0.45))
+    drop-shadow(0 2px 12px rgba(0, 6, 18, 0.45));
 }
 
 .reward-popup__amount {
@@ -2159,14 +2389,18 @@ body.event-snap .lake {
 
 @media (max-width: 480px) {
   .reward-popup__fish {
-    width: clamp(24px, 10vw, 36px);
-    height: clamp(24px, 10vw, 36px);
+    width: clamp(32px, 10vw, 44px);
+    height: clamp(32px, 10vw, 44px);
+    filter:
+      brightness(1.1) contrast(1.05) saturate(1.06)
+      drop-shadow(0 0 11px rgba(145, 228, 255, 0.4))
+      drop-shadow(0 2px 10px rgba(0, 6, 18, 0.42));
   }
 
   .fish-icon-fallback--reward {
-    width: clamp(24px, 10vw, 36px);
-    height: clamp(24px, 10vw, 36px);
-    font-size: 1.1rem;
+    width: clamp(32px, 10vw, 44px);
+    height: clamp(32px, 10vw, 44px);
+    font-size: clamp(1.05rem, 6vw, 1.45rem);
   }
 
   .reward-popup__amount {
