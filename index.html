@@ -332,12 +332,23 @@
 
     <div class="controls dock-bar">
       <div class="controls-zone controls-zone--left">
-        <div class="bet-block glass dock-bet dock-bet--compact">
-          <p class="dock-label">Ставка</p>
-          <div class="bet-row">
-            <button type="button" class="btn-step" id="betMinus" aria-label="Уменьшить ставку">−</button>
-            <div class="bet-val"><span id="betDisplay">500</span> ₸</div>
-            <button type="button" class="btn-step" id="betPlus" aria-label="Увеличить ставку">+</button>
+        <div class="bet-block glass dock-bet dock-bet--hud">
+          <p class="dock-label dock-label--bet">Ставка</p>
+          <div class="bet-value-shell">
+            <div class="bet-row bet-row--main">
+              <button type="button" class="btn-step btn-step--dock-bet" id="betMinus" aria-label="Уменьшить ставку">−</button>
+              <div class="bet-val">
+                <span id="betDisplay">500</span> ₸
+              </div>
+              <button type="button" class="btn-step btn-step--dock-bet" id="betPlus" aria-label="Увеличить ставку">+</button>
+            </div>
+          </div>
+          <div class="bet-presets" id="betPresets" role="group" aria-label="Быстрые ставки">
+            <button type="button" class="btn-bet-preset" data-bet="100" title="100 ₸">100</button>
+            <button type="button" class="btn-bet-preset" data-bet="200" title="200 ₸">200</button>
+            <button type="button" class="btn-bet-preset" data-bet="500" title="500 ₸">500</button>
+            <button type="button" class="btn-bet-preset" data-bet="1000" title="1000 ₸">1000</button>
+            <button type="button" class="btn-bet-preset" data-bet="2000" title="2000 ₸">2000</button>
           </div>
         </div>
       </div>
@@ -357,19 +368,29 @@
 
       <div class="controls-zone controls-zone--right">
         <div class="auto-block glass dock-auto dock-auto--hud">
-          <p class="dock-label">Автокэшаут</p>
-          <div class="auto-row">
-            <button
-              type="button"
-              class="toggle-switch"
-              id="autoCashoutToggle"
-              aria-pressed="false"
-              aria-label="Включить автокэшаут"
-            ></button>
-            <span class="toggle-state" id="autoCashoutState">OFF</span>
-            <span class="auto-mult" id="autoCashoutMult">×2.00</span>
+          <div class="auto-top-row" role="group" aria-label="Автокэшаут и ручной множитель">
+            <span class="auto-top-row__brand">АВТО</span>
+            <div class="auto-top-row__toggle-group">
+              <button
+                type="button"
+                class="toggle-switch"
+                id="autoCashoutToggle"
+                aria-pressed="false"
+                aria-label="Включить автокэшаут"
+              ></button>
+              <span class="toggle-state" id="autoCashoutState">OFF</span>
+            </div>
+            <div class="auto-mult-edit auto-mult-edit--top">
+              <button type="button" class="btn-auto-step" id="autoMultMinus" aria-label="Уменьшить множитель автокэшаута">
+                −
+              </button>
+              <span class="auto-mult auto-mult--target" id="autoCashoutMult">×2.0</span>
+              <button type="button" class="btn-auto-step" id="autoMultPlus" aria-label="Увеличить множитель автокэшаута">
+                +
+              </button>
+            </div>
           </div>
-          <div class="auto-presets" id="autoPresets">
+          <div class="auto-presets" id="autoPresets" role="group" aria-label="Пресеты автокэшаута">
             <button type="button" class="btn-preset" data-mult="1.2">×1.2</button>
             <button type="button" class="btn-preset" data-mult="1.5">×1.5</button>
             <button type="button" class="btn-preset" data-mult="2">×2</button>

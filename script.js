@@ -307,6 +307,7 @@
     btnCash: document.getElementById("btnCash"),
     betMinus: document.getElementById("betMinus"),
     betPlus: document.getElementById("betPlus"),
+    betPresets: document.getElementById("betPresets"),
     waterZone: document.getElementById("waterZone"),
     fishSilhouette: document.getElementById("fishSilhouette"),
     lineWrap: document.getElementById("lineWrap"),
@@ -324,6 +325,8 @@
     autoCashoutToggle: document.getElementById("autoCashoutToggle"),
     autoCashoutState: document.getElementById("autoCashoutState"),
     autoCashoutMult: document.getElementById("autoCashoutMult"),
+    autoMultMinus: document.getElementById("autoMultMinus"),
+    autoMultPlus: document.getElementById("autoMultPlus"),
     autoPresets: document.getElementById("autoPresets"),
     hudIdleStack: document.getElementById("hudIdleStack"),
     fightChart: document.getElementById("fightChart"),
@@ -357,6 +360,9 @@
   let reelWallStartMs = 0;
   /** Случайная фаза колебаний индикатора «сопротивление» за раунд. */
   let resistanceVisualSeed = 0;
+  /** Замороженный прогресс «разворота» графика по времени боя (без crashPoint). Снимки для freeze после раунда. */
+  let fightChartSweepFrozen = 0.06;
+  let fightChartFightElapsedFrozen = 0;
 
   const EVENT_BODY_CLASSES = [
     "event-no-catch",
@@ -525,8 +531,11 @@
     var cls = map[phase];
     if (cls) document.body.classList.add(cls);
     if (phase === "reeling") {
-      var fightSec = reelWallStartMs ? (Date.now() - reelWallStartMs) / 1000 : 0;
-      if (fightSec > 2.2 && resistanceMeterPercent() > 72) {
+      var fightSecEv = reelWallStartMs ? (Date.now() - reelWallStartMs) / 1000 : 0;
+      var evPulse =
+        Math.sin(Date.now() / 440 + resistanceVisualSeed) *
+        Math.cos(fightSecEv * 0.62 + resistanceVisualSeed * 1.4);
+      if (fightSecEv > 1.6 && evPulse > 0.87) {
         document.body.classList.add("event-intense");
       }
     }
@@ -539,6 +548,16 @@
 
   function formatMoney(n) {
     return Math.floor(n).toLocaleString("ru-RU");
+  }
+
+  /** Показ множителя автокэшаута с шагом 0.1 (отдельно от HUD боя). */
+  function formatMultAuto(x) {
+    return "×" + x.toFixed(1);
+  }
+
+  /** Ограничение цели автокэшаута: шаг 0.1, без связи с crashPoint в UI. */
+  function clampAutoCashoutValue() {
+    autoCashoutValue = Math.round(Math.min(CRASH_MULT_CAP, Math.max(1.05, autoCashoutValue)) * 10) / 10;
   }
 
   function formatMult(x) {
@@ -561,6 +580,16 @@
     els.balanceDisplay.textContent = formatMoney(balance);
     els.betDisplay.textContent = formatMoney(bet);
     els.betDisplayTop.textContent = formatMoney(bet);
+    syncBetPresetUI();
+  }
+
+  function syncBetPresetUI() {
+    if (!els.betPresets) return;
+    els.betPresets.querySelectorAll(".btn-bet-preset").forEach(function (btn) {
+      var raw = btn.getAttribute("data-bet");
+      var v = raw ? parseInt(raw, 10) : NaN;
+      btn.classList.toggle("is-active", !isNaN(v) && v === bet);
+    });
   }
 
   /**
@@ -642,13 +671,15 @@
       "is-win",
       "is-snap"
     );
-    var resistPct = resistanceMeterPercent();
     if (phase === "casting") body.classList.add("is-casting");
     if (phase === "bite") body.classList.add("is-bite");
     if (phase === "reeling") {
       body.classList.add("is-reeling");
-      var fs = reelWallStartMs ? (Date.now() - reelWallStartMs) / 1000 : 0;
-      if (fs > 2.2 && resistPct > 74) body.classList.add("is-intense");
+      var fsb = reelWallStartMs ? (Date.now() - reelWallStartMs) / 1000 : 0;
+      var stutter =
+        Math.sin(Date.now() / 410 + resistanceVisualSeed) *
+        Math.cos(fsb * 0.58 + resistanceVisualSeed * 1.2);
+      if (fsb > 1.7 && stutter > 0.88) body.classList.add("is-intense");
     }
     if (phase === "cashedOut") body.classList.add("is-win");
     if (phase === "snapped") body.classList.add("is-snap");
@@ -778,10 +809,10 @@
       return;
     }
     if (phase === "reeling") {
-      var pct = resistanceMeterPercent();
-      if (pct < 40) els.fightChartHint.textContent = "Тяни дальше";
-      else if (pct < 68) els.fightChartHint.textContent = "Рыба сопротивляется";
-      else els.fightChartHint.textContent = "Риск растёт";
+      var fsHint = reelWallStartMs ? (Date.now() - reelWallStartMs) / 1000 : 0;
+      if (fsHint < 5) els.fightChartHint.textContent = "Тяни дальше";
+      else if (fsHint < 14) els.fightChartHint.textContent = "Рыба сопротивляется";
+      else els.fightChartHint.textContent = "Вываживание…";
       return;
     }
     if (phase === "cashedOut") {
@@ -810,19 +841,46 @@
     els.fightChart.classList.toggle("fight-chart--lost", phase === "snapped");
 
     var sm = currentFish.startMultiplier;
-    var range = Math.max(crashPoint - sm, 0.08);
-    var prog = Math.min(1, Math.max(0, (currentMultiplier - sm) / range));
+    /** Вертикаль: множитель vs косметический диапазон по виду рыбы (не crashPoint). */
+    var chartDenomByFish = {
+      crucian: 6.2,
+      perch: 6.45,
+      pike: 6.75,
+      catfish: 7.05,
+      goldfish: 7.35,
+    };
+    var visSpan = Math.max(sm * (chartDenomByFish[currentFish.id] || 6.5), 2.85);
 
-    var resistNorm =
-      phase === "reeling"
-        ? resistanceMeterPercent() / 100
-        : phase === "bite"
-          ? 0.18
-          : phase === "snapped"
-            ? 1
-            : 0;
+    var elapsedFightSec = reelWallStartMs ? (Date.now() - reelWallStartMs) / 1000 : 0;
+    var prog;
+    var elapsedVisual;
 
-    if (phase === "bite") prog = Math.min(prog, 0.035);
+    if (phase === "bite") {
+      prog =
+        0.055 +
+        Math.sin(Date.now() / 920 + resistanceVisualSeed * 1.1) * 0.018 +
+        Math.sin(Date.now() / 1400) * 0.008;
+      elapsedVisual = 0;
+    } else if (phase === "reeling") {
+      var tau = 19 + sm * 1.22;
+      prog = Math.min(0.97, 1 - Math.exp(-elapsedFightSec / tau));
+      fightChartSweepFrozen = prog;
+      fightChartFightElapsedFrozen = elapsedFightSec;
+      elapsedVisual = elapsedFightSec;
+    } else {
+      prog = fightChartSweepFrozen;
+      elapsedVisual = fightChartFightElapsedFrozen;
+    }
+
+    var atmBreath =
+      0.28 +
+      0.38 *
+        Math.sin(Date.now() / 540 + resistanceVisualSeed * 0.05 + elapsedVisual * 1.05) *
+        Math.cos(elapsedVisual * 0.41 + resistanceVisualSeed * 1.15);
+    var fishTone =
+      0.2 +
+      Math.sin(sm * 1.07 + resistanceVisualSeed) * 0.12 +
+      (chartDenomByFish[currentFish.id] ? (chartDenomByFish[currentFish.id] - 6.5) * 0.08 : 0);
 
     var steps = 40;
     var pts = [];
@@ -841,10 +899,10 @@
       x = t * 100 * prog;
       if (prog < 0.012 && i > 3) break;
       multAlong = sm + t * (currentMultiplier - sm);
-      yn = Math.min(1, Math.max(0, (multAlong - sm) / range));
+      yn = Math.min(1, Math.max(0, (multAlong - sm) / visSpan));
       breathe =
-        Math.sin(Date.now() / 460 + t * 6 + resistanceVisualSeed * 0.02) * 0.38 * resistNorm;
-      arch = Math.sin(t * Math.PI) * (1.05 + resistNorm * 1.28);
+        Math.sin(Date.now() / 470 + t * 6 + resistanceVisualSeed * 0.02) * 0.42 * atmBreath;
+      arch = Math.sin(t * Math.PI) * (1.05 + fishTone + atmBreath * 0.55);
       y = bottom - yn * 24 - arch + breathe;
       pts.push({ x: x, y: y });
     }
@@ -856,7 +914,6 @@
       ];
     }
 
-    /** Лёгкое сглаживание по Y — меньше «ломаности», плавнее рост кривой */
     function smoothChartPts(raw) {
       if (raw.length < 3) return raw;
       var out = [];
@@ -895,12 +952,6 @@
     els.fightChartArea.setAttribute("d", fillD);
     els.fightChartDot.setAttribute("cx", last.x.toFixed(2));
     els.fightChartDot.setAttribute("cy", last.y.toFixed(2));
-
-    els.fightChart.classList.toggle("fight-chart--risk-high", phase === "reeling" && resistNorm > 0.72);
-    els.fightChart.classList.toggle(
-      "fight-chart--risk-mid",
-      phase === "reeling" && resistNorm > 0.38 && resistNorm <= 0.72
-    );
   }
 
   function renderRoundVisuals() {
@@ -919,12 +970,7 @@
       els.fightChart.classList.toggle("fight-chart--hidden", !showFightChart);
       els.fightChart.setAttribute("aria-hidden", showFightChart ? "false" : "true");
       if (!showFightChart) {
-        els.fightChart.classList.remove(
-          "fight-chart--won",
-          "fight-chart--lost",
-          "fight-chart--risk-high",
-          "fight-chart--risk-mid"
-        );
+        els.fightChart.classList.remove("fight-chart--won", "fight-chart--lost");
       }
     }
 
@@ -1152,6 +1198,12 @@
 
     els.betMinus.disabled = !idle;
     els.betPlus.disabled = !idle;
+    if (els.betPresets) {
+      var bp = els.betPresets.querySelectorAll(".btn-bet-preset");
+      for (var bi = 0; bi < bp.length; bi++) {
+        bp[bi].disabled = !idle;
+      }
+    }
 
     syncAutoCashoutUI();
   }
@@ -1164,18 +1216,22 @@
     if (!els.autoCashoutToggle || !els.autoCashoutState || !els.autoCashoutMult || !els.autoPresets) {
       return;
     }
+    clampAutoCashoutValue();
     els.autoCashoutToggle.setAttribute("aria-pressed", autoCashoutEnabled ? "true" : "false");
     els.autoCashoutState.textContent = autoCashoutEnabled ? "ON" : "OFF";
-    els.autoCashoutMult.textContent = formatMult(autoCashoutValue);
+    els.autoCashoutMult.textContent = formatMultAuto(autoCashoutValue);
 
     var idle = phase === "idle";
+    if (els.autoMultMinus) els.autoMultMinus.disabled = !idle;
+    if (els.autoMultPlus) els.autoMultPlus.disabled = !idle;
+
     var presetBtns = els.autoPresets.querySelectorAll(".btn-preset");
     for (var i = 0; i < presetBtns.length; i++) {
       var btn = presetBtns[i];
       var raw = btn.getAttribute("data-mult");
       var v = raw ? parseFloat(raw) : NaN;
       btn.disabled = !idle;
-      btn.classList.toggle("is-active", !isNaN(v) && Math.abs(v - autoCashoutValue) < 1e-6);
+      btn.classList.toggle("is-active", !isNaN(v) && Math.abs(v - autoCashoutValue) < 0.051);
     }
   }
 
@@ -1209,6 +1265,8 @@
     resistanceSpikeVibratePrimed = true;
     reelWallStartMs = 0;
     resistanceVisualSeed = 0;
+    fightChartSweepFrozen = 0.06;
+    fightChartFightElapsedFrozen = 0;
 
     els.fishSilhouette.classList.remove("visible");
     if (els.lineWrap) els.lineWrap.classList.remove("shake", "snap", "line-fp--taut");
@@ -1555,8 +1613,40 @@
       var raw = btn.getAttribute("data-mult");
       var v = raw ? parseFloat(raw) : NaN;
       if (isNaN(v)) return;
-      autoCashoutValue = v;
+      autoCashoutValue = Math.round(v * 10) / 10;
+      clampAutoCashoutValue();
       syncAutoCashoutUI();
+    });
+  }
+
+  if (els.autoMultMinus) {
+    els.autoMultMinus.addEventListener("click", function () {
+      if (phase !== "idle") return;
+      autoCashoutValue -= 0.1;
+      clampAutoCashoutValue();
+      syncAutoCashoutUI();
+    });
+  }
+
+  if (els.autoMultPlus) {
+    els.autoMultPlus.addEventListener("click", function () {
+      if (phase !== "idle") return;
+      autoCashoutValue += 0.1;
+      clampAutoCashoutValue();
+      syncAutoCashoutUI();
+    });
+  }
+
+  if (els.betPresets) {
+    els.betPresets.addEventListener("click", function (ev) {
+      var btn = ev.target.closest(".btn-bet-preset");
+      if (!btn || phase !== "idle") return;
+      var raw = btn.getAttribute("data-bet");
+      var v = raw ? parseInt(raw, 10) : NaN;
+      if (isNaN(v)) return;
+      bet = v;
+      clampBet();
+      refreshMoneyUI();
     });
   }
 

@@ -1945,9 +1945,9 @@ body.event-snap .lake {
 }
 
 .fish-icon-fallback--panel {
-  width: clamp(32px, 7vw, 42px);
-  height: clamp(32px, 7vw, 42px);
-  font-size: clamp(1.15rem, 4vw, 1.45rem);
+  width: clamp(52px, 11vw, 60px);
+  height: clamp(52px, 11vw, 60px);
+  font-size: clamp(1.4rem, 5vw, 1.82rem);
 }
 
 .fish-icon-fallback--hist {
@@ -1983,7 +1983,7 @@ body.event-snap .lake {
 .main-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 210px) minmax(0, 1fr) minmax(0, 240px);
+  grid-template-columns: minmax(0, 242px) minmax(0, 1fr) minmax(0, 240px);
   gap: 12px;
   align-items: start;
   min-height: min(46vh, 480px);
@@ -2000,6 +2000,11 @@ body.event-snap .lake {
   overflow-y: auto;
 }
 
+/* Левая колонка «РЫБЫ»: чуть шире подложка и воздух внутри */
+.panel-left {
+  padding: 15px 16px;
+}
+
 .panel h2,
 .hist-heading-desktop {
   font-size: 0.72rem;
@@ -2013,10 +2018,10 @@ body.event-snap .lake {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  font-size: 0.8rem;
-  padding: 8px 0;
+  font-size: 0.88rem;
+  padding: 11px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  gap: 10px;
+  gap: 14px;
 }
 
 .fish-row:last-child {
@@ -2026,6 +2031,12 @@ body.event-snap .lake {
 .fish-row__name {
   flex: 1;
   min-width: 0;
+  padding-inline-end: 6px;
+  font-weight: 700;
+  font-size: 0.89rem;
+  letter-spacing: 0.02em;
+  line-height: 1.28;
+  color: rgba(242, 248, 255, 0.96);
 }
 
 /* Обёртка и скелетон до загрузки очищенных PNG (без белой вспышки) */
@@ -2038,8 +2049,8 @@ body.event-snap .lake {
 }
 
 .fish-icon-host--panel {
-  width: clamp(32px, 7vw, 42px);
-  height: clamp(32px, 7vw, 42px);
+  width: clamp(52px, 11vw, 60px);
+  height: clamp(52px, 11vw, 60px);
 }
 
 .fish-icon-host--hudStatus {
@@ -2135,22 +2146,28 @@ img.fish-line-hud__icon.is-loaded {
   mix-blend-mode: normal;
 }
 
-/* Левая панель «РЫБЫ»: 32–42px (на узких экранах меньше) */
+/* Левая панель «РЫБЫ»: чуть крупнее иконки, акцент на читаемости */
 .fish-icon--panel {
-  width: clamp(32px, 7vw, 42px);
-  height: clamp(32px, 7vw, 42px);
+  width: clamp(52px, 11vw, 60px);
+  height: clamp(52px, 11vw, 60px);
   filter:
-    brightness(1.08) contrast(1.08) saturate(1.05)
-    drop-shadow(0 0 10px rgba(120, 220, 255, 0.38))
-    drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6));
+    brightness(1.14) contrast(1.12) saturate(1.08)
+    drop-shadow(0 0 16px rgba(120, 220, 255, 0.48))
+    drop-shadow(0 3px 10px rgba(0, 0, 0, 0.62));
 }
 
 .fish-meta {
-  opacity: 0.72;
+  opacity: 0.97;
+  font-size: 0.84rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
   text-align: right;
-  max-width: 42%;
+  max-width: 44%;
+  color: rgba(252, 240, 190, 0.98);
+  text-shadow:
+    0 0 12px rgba(232, 207, 82, 0.28),
+    0 1px 0 rgba(0, 8, 20, 0.35);
 }
 
 .panel-center {
@@ -2275,18 +2292,6 @@ img.fish-line-hud__icon.is-loaded {
   50% {
     opacity: 0.88;
   }
-}
-
-.fight-chart--risk-mid .fight-chart__curve {
-  filter: url(#fightGlow) drop-shadow(0 0 6px rgba(120, 200, 255, 0.45));
-}
-
-.fight-chart--risk-high .fight-chart__curve {
-  filter: url(#fightGlow) drop-shadow(0 0 10px rgba(180, 140, 255, 0.38));
-}
-
-.fight-chart--risk-high .fight-chart__dot {
-  stroke: rgba(230, 210, 255, 0.95);
 }
 
 .fight-chart__footer {
@@ -2991,6 +2996,106 @@ img.fish-line-hud__icon.is-loaded {
   flex-shrink: 0;
 }
 
+/* Панель ставки — тот же визуальный язык, что и dock-auto--hud */
+.dock-bet.dock-bet--hud {
+  position: relative;
+  z-index: 6;
+  max-width: 324px;
+  padding: 10px 14px 11px;
+  border-radius: 15px;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 10px 36px rgba(0, 4, 14, 0.55),
+    0 0 0 1px rgba(56, 214, 255, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.dock-bet.dock-bet--hud .dock-label {
+  margin-bottom: 7px;
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+}
+
+.dock-bet.dock-bet--hud .bet-value-shell {
+  margin-bottom: 10px;
+  padding: 5px 8px;
+  border-radius: 12px;
+  background: rgba(0, 10, 22, 0.42);
+  border: 1px solid rgba(56, 214, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.dock-bet.dock-bet--hud .bet-row--main {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dock-bet.dock-bet--hud .bet-row--main .btn-step--dock-bet {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 11px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.dock-bet.dock-bet--hud .bet-row--main .btn-step--dock-bet:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.dock-bet.dock-bet--hud .bet-val {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 1.16rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  text-shadow:
+    0 0 14px var(--gold-glow),
+    0 0 22px rgba(56, 214, 255, 0.1),
+    0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.dock-bet.dock-bet--hud .bet-presets {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 0;
+}
+
+.dock-bet.dock-bet--hud .btn-bet-preset {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 8px 5px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.dock-bet.dock-bet--hud .btn-bet-preset.is-active {
+  border-color: rgba(232, 207, 82, 0.72);
+  background: linear-gradient(180deg, rgba(232, 207, 82, 0.22), rgba(232, 207, 82, 0.1));
+  color: #fff4c4;
+  box-shadow:
+    0 0 18px rgba(232, 207, 82, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
 .dock-bet.dock-bet--compact {
   width: fit-content;
   max-width: min(184px, 46vw);
@@ -3044,9 +3149,9 @@ img.fish-line-hud__icon.is-loaded {
 .dock-auto.dock-auto--hud {
   position: relative;
   z-index: 6;
-  max-width: 198px;
-  padding: 9px 11px 10px;
-  border-radius: 14px;
+  max-width: 324px;
+  padding: 10px 14px 11px;
+  border-radius: 15px;
   border-color: rgba(255, 255, 255, 0.1);
   box-shadow:
     0 10px 36px rgba(0, 4, 14, 0.55),
@@ -3054,27 +3159,163 @@ img.fish-line-hud__icon.is-loaded {
     inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
 
-.dock-auto.dock-auto--hud .dock-label {
-  margin-bottom: 6px;
-  font-size: 0.52rem;
+/* Верхняя строка: АВТО · toggle + статус · [ − ] множитель [ + ] */
+.dock-auto.dock-auto--hud .auto-top-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 10px;
+  margin-bottom: 10px;
+  min-width: 0;
+}
+
+.dock-auto.dock-auto--hud .auto-top-row__brand {
+  flex-shrink: 0;
+  font-size: 0.56rem;
+  font-weight: 600;
   letter-spacing: 0.14em;
+  color: var(--muted);
 }
 
-.dock-auto.dock-auto--hud .auto-row {
-  margin-bottom: 6px;
+.dock-auto.dock-auto--hud .auto-top-row__toggle-group {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 10px;
 }
 
+.dock-auto.dock-auto--hud .toggle-switch {
+  width: 54px;
+  height: 30px;
+}
+
+.dock-auto.dock-auto--hud .toggle-switch::after {
+  width: 24px;
+  height: 24px;
+  top: 2px;
+  left: 3px;
+}
+
+.dock-auto.dock-auto--hud .toggle-switch[aria-pressed="true"]::after {
+  transform: translateX(24px);
+}
+
+.dock-auto.dock-auto--hud .toggle-state {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  min-width: 2.35rem;
+}
+
+.dock-auto.dock-auto--hud .auto-top-row .auto-mult-edit {
+  flex: 1 1 auto;
+  min-width: 6.75rem;
+  margin-bottom: 0;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 12px;
+}
+
+.dock-auto.dock-auto--hud .auto-top-row .btn-auto-step {
+  width: 34px;
+  height: 34px;
+  font-size: 1.1rem;
+  border-radius: 11px;
+}
+
+.dock-auto.dock-auto--hud .auto-top-row .auto-mult.auto-mult--target {
+  font-size: 1.16rem;
+  letter-spacing: 0.02em;
+}
+
+/* Строка пресетов под верхним блоком */
 .dock-auto.dock-auto--hud .auto-presets {
-  gap: 5px;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 8px;
 }
 
 .dock-auto.dock-auto--hud .btn-preset {
-  padding: 5px 8px;
-  font-size: 0.62rem;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 8px 7px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.dock-auto.dock-auto--hud .auto-mult {
-  font-size: 0.88rem;
+.dock-auto.dock-auto--hud .btn-preset.is-active {
+  border-color: rgba(232, 207, 82, 0.72);
+  background: linear-gradient(180deg, rgba(232, 207, 82, 0.22), rgba(232, 207, 82, 0.1));
+  color: #fff4c4;
+  box-shadow:
+    0 0 18px rgba(232, 207, 82, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Ручной множитель автокэшаута ±0.1 — одна строка: [ − ] · значение · [ + ] */
+.auto-mult-edit {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  background: rgba(0, 10, 22, 0.42);
+  border: 1px solid rgba(56, 214, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.auto-mult-edit .auto-mult {
+  margin-left: 0;
+}
+
+.btn-auto-step {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 11px;
+  font-size: 1.12rem;
+  font-weight: 700;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.btn-auto-step:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.auto-mult.auto-mult--target {
+  grid-column: 2;
+  justify-self: center;
+  align-self: center;
+  min-width: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 1.02rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold-hot);
+  text-shadow:
+    0 0 16px var(--gold-glow),
+    0 0 26px rgba(56, 214, 255, 0.14),
+    0 1px 0 rgba(0, 0, 0, 0.45);
+}
+
+.auto-mult-edit .btn-auto-step:first-of-type {
+  grid-column: 1;
+}
+
+.auto-mult-edit .btn-auto-step:last-of-type {
+  grid-column: 3;
 }
 
 .auto-row {
@@ -3469,19 +3710,34 @@ button:disabled {
 
 @media (max-width: 480px) {
   .fish-row {
-    font-size: 0.74rem;
-    gap: 8px;
+    font-size: 0.8rem;
+    gap: 11px;
+    padding: 10px 0;
+  }
+
+  .fish-row__name {
+    font-size: 0.82rem;
+    padding-inline-end: 5px;
+  }
+
+  .fish-meta {
+    font-size: 0.76rem;
+  }
+
+  .fish-icon-host--panel {
+    width: clamp(46px, 14.5vw, 54px);
+    height: clamp(46px, 14.5vw, 54px);
   }
 
   .fish-icon--panel {
-    width: 30px;
-    height: 30px;
+    width: clamp(46px, 14.5vw, 54px);
+    height: clamp(46px, 14.5vw, 54px);
   }
 
   .fish-icon-fallback--panel {
-    width: 30px;
-    height: 30px;
-    font-size: 1.05rem;
+    width: clamp(46px, 14.5vw, 54px);
+    height: clamp(46px, 14.5vw, 54px);
+    font-size: clamp(1.24rem, 5vw, 1.58rem);
   }
 
   .fish-icon--hist {
@@ -3499,6 +3755,71 @@ button:disabled {
     width: 22px;
     height: 22px;
     font-size: 0.65rem;
+  }
+
+  /* Автокэшаут: верхняя строка при нехватке ширины — ручной множитель на второй линии */
+  .dock-auto.dock-auto--hud {
+    padding: 10px 12px 11px;
+  }
+
+  .dock-auto.dock-auto--hud .auto-top-row {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 9px;
+  }
+
+  .dock-auto.dock-auto--hud .auto-top-row .auto-mult-edit {
+    flex: 1 1 100%;
+    min-width: 0;
+    padding: 6px 8px;
+    gap: 8px;
+  }
+
+  .dock-auto.dock-auto--hud .auto-top-row .auto-mult.auto-mult--target {
+    font-size: 1.08rem;
+  }
+
+  .dock-auto.dock-auto--hud .auto-top-row .btn-auto-step {
+    width: 36px;
+    height: 36px;
+    font-size: 1.12rem;
+  }
+
+  .dock-auto.dock-auto--hud .btn-preset {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 7px 4px;
+    font-size: 0.7rem;
+    letter-spacing: -0.02em;
+  }
+
+  .dock-auto.dock-auto--hud .auto-presets {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .dock-bet.dock-bet--hud {
+    padding: 10px 12px 11px;
+  }
+
+  .dock-bet.dock-bet--hud .bet-row--main .btn-step--dock-bet {
+    width: 36px;
+    height: 36px;
+    font-size: 1.12rem;
+  }
+
+  .dock-bet.dock-bet--hud .bet-val {
+    font-size: 1.08rem;
+  }
+
+  .dock-bet.dock-bet--hud .bet-presets {
+    gap: 6px;
+  }
+
+  .dock-bet.dock-bet--hud .btn-bet-preset {
+    padding: 7px 3px;
+    font-size: 0.66rem;
+    letter-spacing: -0.02em;
   }
 
   .panel {
