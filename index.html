@@ -157,85 +157,67 @@
       <aside class="panel panel-left glass">
         <h2>РЫБЫ</h2>
         <div class="fish-row fish-row--malek">
-          <span class="fish-icon-host fish-icon-host--panel">
+          <span
+            class="fish-icon-host fish-icon-host--panel"
+            data-fish-game-id="malek"
+            data-fish-alt="Малёк"
+          >
             <span class="fish-icon-skeleton fish-icon-skeleton--panel" aria-hidden="true"></span>
-            <img
-              class="fish-icon fish-icon--panel"
-              data-fish-game-id="malek"
-              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-              alt="Малёк"
-              decoding="async"
-            />
           </span>
           <span class="fish-row__name">Малёк</span>
           <span class="fish-meta">×0.3–×0.8 · возврат</span>
         </div>
         <div class="fish-row crucian">
-          <span class="fish-icon-host fish-icon-host--panel">
+          <span
+            class="fish-icon-host fish-icon-host--panel"
+            data-fish-game-id="crucian"
+            data-fish-alt="Карась"
+          >
             <span class="fish-icon-skeleton fish-icon-skeleton--panel" aria-hidden="true"></span>
-            <img
-              class="fish-icon fish-icon--panel"
-              data-fish-game-id="crucian"
-              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-              alt="Карась"
-              decoding="async"
-            />
           </span>
           <span class="fish-row__name">Карась</span>
           <span class="fish-meta">×1.2</span>
         </div>
         <div class="fish-row perch">
-          <span class="fish-icon-host fish-icon-host--panel">
+          <span
+            class="fish-icon-host fish-icon-host--panel"
+            data-fish-game-id="perch"
+            data-fish-alt="Окунь"
+          >
             <span class="fish-icon-skeleton fish-icon-skeleton--panel" aria-hidden="true"></span>
-            <img
-              class="fish-icon fish-icon--panel"
-              data-fish-game-id="perch"
-              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-              alt="Окунь"
-              decoding="async"
-            />
           </span>
           <span class="fish-row__name">Окунь</span>
           <span class="fish-meta">×2</span>
         </div>
         <div class="fish-row pike">
-          <span class="fish-icon-host fish-icon-host--panel">
+          <span
+            class="fish-icon-host fish-icon-host--panel"
+            data-fish-game-id="pike"
+            data-fish-alt="Щука"
+          >
             <span class="fish-icon-skeleton fish-icon-skeleton--panel" aria-hidden="true"></span>
-            <img
-              class="fish-icon fish-icon--panel"
-              data-fish-game-id="pike"
-              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-              alt="Щука"
-              decoding="async"
-            />
           </span>
           <span class="fish-row__name">Щука</span>
           <span class="fish-meta">×3.5</span>
         </div>
         <div class="fish-row catfish">
-          <span class="fish-icon-host fish-icon-host--panel">
+          <span
+            class="fish-icon-host fish-icon-host--panel"
+            data-fish-game-id="catfish"
+            data-fish-alt="Сом"
+          >
             <span class="fish-icon-skeleton fish-icon-skeleton--panel" aria-hidden="true"></span>
-            <img
-              class="fish-icon fish-icon--panel"
-              data-fish-game-id="catfish"
-              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-              alt="Сом"
-              decoding="async"
-            />
           </span>
           <span class="fish-row__name">Сом</span>
           <span class="fish-meta">×6</span>
         </div>
         <div class="fish-row goldfish">
-          <span class="fish-icon-host fish-icon-host--panel">
+          <span
+            class="fish-icon-host fish-icon-host--panel"
+            data-fish-game-id="goldfish"
+            data-fish-alt="Золотая рыба"
+          >
             <span class="fish-icon-skeleton fish-icon-skeleton--panel" aria-hidden="true"></span>
-            <img
-              class="fish-icon fish-icon--panel"
-              data-fish-game-id="goldfish"
-              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-              alt="Золотая рыба"
-              decoding="async"
-            />
           </span>
           <span class="fish-row__name">Золотая рыба</span>
           <span class="fish-meta">×10</span>
@@ -243,20 +225,98 @@
       </aside>
 
       <section class="panel panel-center hud-center" id="hudCenter">
-        <div class="multiplier dim hud-value--hidden" id="multDisplay">×1.00</div>
-        <p class="hud-status" id="statusText">Выберите ставку и сделайте заброс.</p>
-        <div class="catch-amount dim hud-value--hidden" id="catchDisplay">0 ₸</div>
-        <div class="fish-name hud-value--hidden" id="fishLine">&nbsp;</div>
-        <div
-          class="tension-wrap hud-tension resistance-wrap resistance-hud"
-          id="resistanceHud"
-          aria-hidden="true"
-        >
-          <label>СОПРОТИВЛЕНИЕ РЫБЫ</label>
-          <div class="tension-bar resistance-bar">
-            <div class="tension-fill resistance-fill" id="tensionFill"></div>
+        <div class="hud-idle-stack" id="hudIdleStack">
+          <p class="hud-status" id="statusText">Выберите ставку и сделайте заброс.</p>
+        </div>
+
+        <div class="fight-chart fight-chart--hidden" id="fightChart" aria-hidden="true">
+          <div class="fight-chart__mult-wrap">
+            <div class="multiplier fight-chart__mult dim hud-value--hidden" id="multDisplay">×1.00</div>
           </div>
-          <p class="resistance-hint" id="resistanceHint">&nbsp;</p>
+          <div class="fight-chart__viz">
+            <svg
+              class="fight-chart__svg"
+              viewBox="0 0 100 40"
+              preserveAspectRatio="xMidYMid meet"
+              aria-hidden="true"
+            >
+              <defs>
+                <linearGradient id="fightLineGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#38d6ff" />
+                  <stop offset="50%" stop-color="#72e8ff" />
+                  <stop offset="100%" stop-color="#d4f8ff" />
+                </linearGradient>
+                <linearGradient id="fightFillGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="rgba(56, 214, 255, 0.42)" />
+                  <stop offset="72%" stop-color="rgba(24, 90, 140, 0.08)" />
+                  <stop offset="100%" stop-color="rgba(4, 14, 28, 0)" />
+                </linearGradient>
+                <filter id="fightGlow" x="-35%" y="-35%" width="170%" height="170%">
+                  <feGaussianBlur stdDeviation="1.1" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+                <filter id="fightDotGlow" x="-80%" y="-80%" width="260%" height="260%">
+                  <feGaussianBlur stdDeviation="0.85" result="db" />
+                  <feMerge>
+                    <feMergeNode in="db" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              <path
+                class="fight-chart__band"
+                d="M0 34 Q25 33 50 32 T100 30"
+                fill="none"
+                stroke="rgba(56, 214, 255, 0.07)"
+                stroke-width="0.4"
+              />
+              <path class="fight-chart__area" id="fightChartArea" fill="url(#fightFillGrad)" d="" />
+              <path
+                class="fight-chart__curve"
+                id="fightChartCurve"
+                fill="none"
+                stroke="url(#fightLineGrad)"
+                stroke-width="0.82"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                filter="url(#fightGlow)"
+                d=""
+              />
+              <circle
+                class="fight-chart__dot"
+                id="fightChartDot"
+                cx="0"
+                cy="33"
+                r="1.45"
+                fill="#f2fdff"
+                stroke="rgba(120, 230, 255, 0.95)"
+                stroke-width="0.4"
+                filter="url(#fightDotGlow)"
+              />
+            </svg>
+          </div>
+          <div class="fight-chart__footer">
+            <div class="catch-amount fight-chart__catch dim hud-value--hidden" id="catchDisplay">0 ₸</div>
+            <p class="fight-chart__hint" id="fightChartHint">&nbsp;</p>
+          </div>
+        </div>
+
+        <div id="fishLine" class="fish-name hud-value--hidden" aria-hidden="true">&nbsp;</div>
+
+        <div class="hud-hidden-meter" aria-hidden="true">
+          <div
+            class="tension-wrap hud-tension resistance-wrap resistance-hud resistance-hud--telemetry"
+            id="resistanceHud"
+          >
+            <label>СОПРОТИВЛЕНИЕ РЫБЫ</label>
+            <div class="tension-bar resistance-bar">
+              <div class="tension-fill resistance-fill" id="tensionFill"></div>
+            </div>
+            <p class="resistance-hint" id="resistanceHint">&nbsp;</p>
+          </div>
         </div>
       </section>
 
@@ -323,58 +383,64 @@
     <p class="footer-note">Прототип с виртуальным балансом. Без реальных платежей.</p>
   </div>
 
-  <!-- FP (леска/удочка): скрыто в CSS; разметка для script.js -->
-  <div class="scene-fp" aria-hidden="true">
-    <div class="scene-fp__line">
+  <!-- FP overlay: рука + удочка + леска (ниже .app по z-index); id для script.js -->
+  <div class="fp-rod-layer scene-fp" aria-hidden="true">
+    <div class="fp-line scene-fp__line">
       <div class="line-fp" id="lineWrap">
         <svg class="line-fp__svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           <defs>
-            <linearGradient id="lg" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stop-color="#eaf6ff" stop-opacity="0.95"/>
-              <stop offset="100%" stop-color="#7ecbff" stop-opacity="0.55"/>
+            <linearGradient id="lg" x1="8%" y1="88%" x2="72%" y2="28%">
+              <stop offset="0%" stop-color="#dceaf4" stop-opacity="0.72"/>
+              <stop offset="42%" stop-color="#a8c4dc" stop-opacity="0.6"/>
+              <stop offset="100%" stop-color="#7598b4" stop-opacity="0.52"/>
             </linearGradient>
-            <filter id="lglow" x="-40%" y="-40%" width="180%" height="180%">
-              <feGaussianBlur stdDeviation="0.35" result="b"/>
+            <filter id="lglow" x="-35%" y="-35%" width="170%" height="170%">
+              <feGaussianBlur stdDeviation="0.2" result="b"/>
               <feMerge>
                 <feMergeNode in="b"/>
                 <feMergeNode in="SourceGraphic"/>
               </feMerge>
             </filter>
           </defs>
-          <path id="linePath" class="line-fp__path" d="" fill="none" stroke="url(#lg)" stroke-width="0.35" stroke-linecap="round" filter="url(#lglow)" />
+          <path id="linePath" class="line-fp__path" d="" fill="none" stroke="url(#lg)" stroke-linecap="round" stroke-linejoin="round" filter="url(#lglow)" />
         </svg>
       </div>
     </div>
 
     <div class="scene-fp__rig">
-      <div class="fp-rig" id="rodRig">
+      <div class="fp-hand" aria-hidden="true">
+        <span class="fp-hand__silhouette"></span>
+        <span class="fp-hand__grip"></span>
+      </div>
+      <div class="fp-rod fp-rig" id="rodRig">
         <svg class="fp-rig__svg" viewBox="0 0 320 280" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <defs>
-            <linearGradient id="skinFp" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#5c473e"/>
-              <stop offset="100%" stop-color="#2a1f1a"/>
-            </linearGradient>
             <linearGradient id="rodMetalFp" x1="0%" y1="50%" x2="100%" y2="50%">
-              <stop offset="0%" stop-color="#242d38"/>
-              <stop offset="40%" stop-color="#4a5666"/>
-              <stop offset="100%" stop-color="#141a22"/>
+              <stop offset="0%" stop-color="#343f4e"/>
+              <stop offset="42%" stop-color="#5c6d82"/>
+              <stop offset="100%" stop-color="#232d3a"/>
+            </linearGradient>
+            <linearGradient id="rodGripFp" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#283344"/>
+              <stop offset="52%" stop-color="#1b2533"/>
+              <stop offset="100%" stop-color="#141c27"/>
             </linearGradient>
             <linearGradient id="rodAccentFp" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stop-color="#3ad0f5"/>
-              <stop offset="100%" stop-color="#157aa8"/>
+              <stop offset="0%" stop-color="#32b8dc"/>
+              <stop offset="100%" stop-color="#136a8f"/>
             </linearGradient>
           </defs>
-          <ellipse cx="220" cy="254" rx="44" ry="25" fill="url(#skinFp)" opacity="0.82" transform="rotate(-8 220 254)"/>
-          <ellipse cx="274" cy="234" rx="31" ry="54" fill="url(#skinFp)" opacity="0.78" transform="rotate(14 274 234)"/>
-          <ellipse cx="238" cy="216" rx="25" ry="16" fill="#2d221c" opacity="0.45" transform="rotate(-10 238 216)"/>
           <g transform="rotate(-4 118 198)">
             <g class="rod-assembly" transform-origin="118 198">
-              <path d="M118 198 L52 222 L48 232 L56 238 L122 208 Z" fill="#171c24" stroke="#2e3848" stroke-width="0.85"/>
-              <path id="rodBlank" d="M118 198 Q172 132 248 58 L252 52 L258 56 L182 138 Q148 176 122 202 Z" fill="url(#rodMetalFp)" stroke="#2ecbff" stroke-opacity="0.26" stroke-width="0.6"/>
-              <path d="M248 58 L252 52 L258 56 L254 62 Z" fill="url(#rodAccentFp)"/>
-              <circle cx="132" cy="188" r="15" fill="#1e2630" stroke="rgba(232,197,71,0.32)" stroke-width="1.35"/>
-              <circle cx="132" cy="188" r="8" fill="none" stroke="rgba(46,203,255,0.26)" stroke-width="1.35" stroke-dasharray="3 5" class="reel-spin"/>
-              <line x1="132" y1="188" x2="252" y2="56" stroke="rgba(255,255,255,0.055)" stroke-width="2.75" stroke-linecap="round"/>
+              <path d="M118 198 L52 222 L48 232 L56 238 L122 208 Z" fill="url(#rodGripFp)" stroke="rgba(178,198,218,0.48)" stroke-width="0.88"/>
+              <path d="M58 226 L108 206 L114 212 L66 232 Z" fill="rgba(255,255,255,0.07)" stroke="none"/>
+              <path id="rodBlank" d="M118 198 Q172 132 248 58 L252 52 L258 56 L182 138 Q148 176 122 202 Z" fill="url(#rodMetalFp)" stroke="rgba(140,178,210,0.5)" stroke-width="0.56"/>
+              <path d="M248 58 L252 52 L258 56 L254 62 Z" fill="url(#rodAccentFp)" opacity="0.88"/>
+              <circle cx="132" cy="188" r="15.5" fill="#283442" stroke="rgba(210,228,246,0.45)" stroke-width="1.12"/>
+              <circle cx="132" cy="188" r="12.5" fill="#1e2834" stroke="rgba(238,215,145,0.3)" stroke-width="0.88"/>
+              <circle cx="132" cy="188" r="8" fill="none" stroke="rgba(128,205,228,0.4)" stroke-width="1.06" stroke-dasharray="3 5" class="reel-spin"/>
+              <circle cx="132" cy="188" r="4.2" fill="rgba(255,255,255,0.065)" stroke="none"/>
+              <line x1="132" y1="188" x2="252" y2="56" stroke="rgba(236,246,255,0.1)" stroke-width="2.2" stroke-linecap="round"/>
             </g>
           </g>
         </svg>

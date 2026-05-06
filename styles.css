@@ -139,17 +139,17 @@ body.bite-shake .scene-back {
   display: none !important;
 }
 
-/* FP-декор отключён — блок разметки сохранён для script.js; показать: убрать display:none */
-.scene-fp {
+/* FP overlay: первое лицо — .fp-line / .fp-hand / .fp-rod (ниже .app --z-app) */
+.fp-rod-layer.scene-fp {
   position: fixed;
   inset: 0;
   z-index: var(--z-scene-fp);
   overflow: visible;
   pointer-events: none;
-  display: none !important;
 }
 
-.scene-fp__line {
+.scene-fp__line,
+.fp-line {
   position: absolute;
   inset: 0;
   z-index: 1;
@@ -161,6 +161,158 @@ body.bite-shake .scene-back {
   inset: 0;
   z-index: 2;
   pointer-events: none;
+}
+
+/* ---------- FP hand (заготовка композиции; заменить на финальный ассет) ---------- */
+
+.fp-hand {
+  position: absolute;
+  left: auto;
+  right: clamp(196px, 23.5vw, 318px);
+  bottom: clamp(108px, 16.5vh, 170px);
+  width: min(36vw, 158px);
+  height: min(20vh, 132px);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.42s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  filter:
+    drop-shadow(0 14px 26px rgba(0, 0, 0, 0.62))
+    brightness(0.9)
+    saturate(0.85);
+}
+
+.fp-hand__silhouette {
+  position: absolute;
+  right: -5%;
+  bottom: -14%;
+  width: 80%;
+  height: 64%;
+  border-radius: 52% 48% 48% 52%;
+  background:
+    radial-gradient(ellipse 92% 86% at 40% 36%, rgba(118, 96, 82, 0.42) 0%, transparent 58%),
+    radial-gradient(ellipse 74% 76% at 70% 54%, rgba(62, 48, 40, 0.52) 0%, rgba(22, 17, 14, 0.78) 100%);
+  transform: rotate(-11deg);
+}
+
+.fp-hand__grip {
+  position: absolute;
+  right: 16%;
+  bottom: 6%;
+  width: 44%;
+  height: 30%;
+  border-radius: 42%;
+  background: linear-gradient(148deg, rgba(48, 38, 32, 0.48), rgba(18, 14, 11, 0.72));
+  transform: rotate(-17deg);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.05);
+}
+
+/* Idle: рука скрыта, удочка едва заметна */
+body:not(.is-casting):not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap) .fp-hand {
+  opacity: 0;
+  transform: translate3d(6px, 8px, 0);
+}
+
+body:not(.is-casting):not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap) .fp-rod.fp-rig {
+  opacity: 0.188;
+  transform: translate3d(0, 0, 0);
+}
+
+body:not(.is-casting):not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap) .line-fp__path {
+  stroke-opacity: 0.118;
+}
+
+/* Заброс / ожидание */
+body.is-casting:not(.is-bite):not(.is-reeling) .fp-hand {
+  opacity: 0.36;
+  transform: translate3d(0, 0, 0);
+}
+
+body.is-casting:not(.is-bite):not(.is-reeling) .fp-rod.fp-rig {
+  opacity: 0.61;
+}
+
+body.is-casting:not(.is-bite):not(.is-reeling) .line-fp__path {
+  stroke-opacity: 0.27;
+}
+
+/* Клёв */
+body.is-bite .fp-hand {
+  opacity: 0.54;
+  animation: fpHandMicro 3.35s ease-in-out infinite;
+}
+
+body.is-bite .fp-rod.fp-rig {
+  opacity: 0.87;
+}
+
+body.is-bite .line-fp__path {
+  stroke-opacity: 0.41;
+}
+
+/* Вываживание */
+body.is-reeling .fp-hand {
+  opacity: 0.64;
+  animation: fpHandMicro 2.85s ease-in-out infinite;
+}
+
+body.is-reeling .fp-rod.fp-rig {
+  opacity: 0.985;
+  animation: fpRodMicro 3.85s ease-in-out infinite;
+}
+
+body.is-intense .fp-hand {
+  animation-duration: 2.05s;
+}
+
+body.is-intense .fp-rod.fp-rig {
+  animation-duration: 2.25s;
+}
+
+body.is-reeling .line-fp__path {
+  stroke-opacity: 0.48;
+}
+
+@keyframes fpHandMicro {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-0.7px, 0.4px, 0);
+  }
+}
+
+@keyframes fpRodMicro {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  33% {
+    transform: translate3d(-0.45px, 0.28px, 0) rotate(-0.16deg);
+  }
+  66% {
+    transform: translate3d(0.4px, -0.28px, 0) rotate(0.14deg);
+  }
+}
+
+/* Кэшаут / обрыв — быстро стухает */
+body.is-win .fp-hand,
+body.is-snap .fp-hand {
+  opacity: 0.06;
+  animation: none;
+  transition: opacity 0.2s ease-out;
+}
+
+body.is-win .fp-rod.fp-rig,
+body.is-snap .fp-rod.fp-rig {
+  opacity: 0.12;
+  animation: none;
+  transition: opacity 0.2s ease-out;
+}
+
+body.is-win .line-fp__path,
+body.is-snap .line-fp__path {
+  stroke-opacity: 0.072;
+  transition: stroke-opacity 0.22s ease-out;
 }
 
 .sky {
@@ -1182,21 +1334,22 @@ body.is-reeling .fish-silhouette.visible .fish-underwater-shape {
 }
 
 .line-fp__path {
-  transition: stroke-opacity 0.12s ease;
+  stroke-width: 0.185;
+  transition: stroke-opacity 0.38s ease, stroke-width 0.35s ease, filter 0.35s ease;
 }
 
 .line-fp.line-fp--taut .line-fp__path {
-  stroke-width: 0.42;
-  filter: drop-shadow(0 0 4px rgba(56, 214, 255, 0.55));
+  stroke-width: 0.245;
+  filter: drop-shadow(0 0 3px rgba(150, 198, 228, 0.48));
 }
 
 .line-fp.shake {
-  animation: lineFpShake 0.085s infinite;
+  animation: lineFpShake 0.11s ease-in-out infinite;
 }
 
 @keyframes lineFpShake {
   0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(1px, -1px); }
+  50% { transform: translate(0.5px, -0.5px); }
 }
 
 .line-fp.snap .line-fp__path {
@@ -1204,14 +1357,14 @@ body.is-reeling .fish-silhouette.visible .fish-underwater-shape {
 }
 
 @keyframes lineSnapFlash {
-  0% { stroke-opacity: 1; filter: drop-shadow(0 0 6px rgba(255, 80, 100, 0.8)); }
-  45% { stroke-opacity: 0.35; stroke-dasharray: 1.2 4; }
-  100% { stroke-opacity: 0.55; stroke-dasharray: 2 8; }
+  0% { stroke-opacity: 0.55; filter: drop-shadow(0 0 4px rgba(255, 110, 130, 0.38)); }
+  45% { stroke-opacity: 0.22; stroke-dasharray: 1 5; }
+  100% { stroke-opacity: 0.28; stroke-dasharray: 2 8; }
 }
 
 /* ---------- FP rig (руки + удочка) ---------- */
 
-/* Якорь ближе к «В САДОК»: отступ справа под карточку автокэшаута, выше кнопок — без перекрытия UI */
+/* Якорь из нижнего правого угла: выше дока, левее автокэшаута — без перекрытия UI */
 .fp-rig {
   position: absolute;
   left: auto;
@@ -1220,28 +1373,33 @@ body.is-reeling .fish-silhouette.visible .fish-underwater-shape {
   width: min(52vw, 300px);
   height: min(26vh, 236px);
   pointer-events: none;
-  opacity: 0.88;
+  z-index: 2;
+  opacity: 0.188;
+  transition: opacity 0.55s ease, filter 0.5s ease;
   filter:
-    drop-shadow(0 12px 32px rgba(0, 0, 0, 0.72))
-    brightness(0.82)
-    saturate(0.88);
+    drop-shadow(0 0 1px rgba(184, 218, 248, 0.55))
+    drop-shadow(0 0 12px rgba(74, 138, 188, 0.34))
+    drop-shadow(0 14px 34px rgba(0, 0, 0, 0.78))
+    brightness(0.96)
+    contrast(1.06)
+    saturate(0.96);
 }
 
 .fp-rig__svg {
   width: 100%;
   height: 100%;
   display: block;
-  transform: scale(0.76);
+  transform: scale(0.804);
   transform-origin: 92% 98%;
 }
 
 .rod-assembly {
-  transition: transform 0.16s ease-out;
+  transition: transform 0.28s cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 .reel-spin {
   transform-origin: 132px 188px;
-  animation: reelSpin 5s linear infinite;
+  animation: none;
 }
 
 @keyframes reelSpin {
@@ -1249,7 +1407,7 @@ body.is-reeling .fish-silhouette.visible .fish-underwater-shape {
 }
 
 .fp-rig--active .reel-spin {
-  animation-duration: 2.2s;
+  animation: reelSpin 2.2s linear infinite;
 }
 
 .fp-rig--bent .rod-assembly {
@@ -1261,12 +1419,12 @@ body.is-reeling .fish-silhouette.visible .fish-underwater-shape {
 }
 
 .fp-rig--bite .rod-assembly {
-  animation: rodNibble 0.5s ease-in-out 2;
+  animation: rodNibble 0.62s ease-in-out 2;
 }
 
 @keyframes rodNibble {
   0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(3deg); }
+  50% { transform: rotate(2deg); }
 }
 
 /* ---------- Flash ---------- */
@@ -1528,13 +1686,15 @@ body.event-intense .btn-pill.btn-cash.pulse-high {
   }
 }
 
-body.event-reeling .panel.panel-center.hud-center .multiplier:not(.dim) {
+body.event-reeling .fight-chart .multiplier:not(.dim),
+body.event-reeling .panel.panel-center.hud-center .fight-chart .multiplier:not(.dim) {
   text-shadow:
     0 0 22px rgba(56, 214, 255, 0.35),
     0 0 40px rgba(56, 214, 255, 0.12);
 }
 
-body.event-intense .panel.panel-center.hud-center .multiplier:not(.dim) {
+body.event-intense .fight-chart .multiplier:not(.dim),
+body.event-intense .panel.panel-center.hud-center .fight-chart .multiplier:not(.dim) {
   text-shadow:
     0 0 28px rgba(120, 200, 255, 0.55),
     0 0 52px rgba(160, 110, 255, 0.22);
@@ -1704,44 +1864,74 @@ body.event-snap .lake {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
   max-width: 100%;
+  padding: 10px 18px 12px;
+  border-radius: 14px;
+  background: rgba(5, 16, 34, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(56, 214, 255, 0.16);
+  box-shadow:
+    0 10px 32px rgba(0, 4, 18, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .hud-status-with-fish__icon {
   width: clamp(26px, 7vw, 38px);
   height: clamp(26px, 7vw, 38px);
+  mix-blend-mode: normal;
   filter:
-    brightness(1.08) contrast(1.08) saturate(1.05)
-    drop-shadow(0 0 10px rgba(120, 220, 255, 0.42));
+    brightness(1.07) contrast(1.06) saturate(1.08)
+    drop-shadow(0 2px 10px rgba(0, 10, 24, 0.62))
+    drop-shadow(0 0 14px rgba(72, 188, 228, 0.36));
 }
 
 .hud-status-with-fish__msg {
   flex: 1;
   min-width: min(100%, 14rem);
   text-align: center;
+  font-size: 0.8rem;
+  line-height: 1.48;
+  letter-spacing: 0.02em;
+  color: rgba(212, 234, 252, 0.93);
 }
 
 .fish-line-hud {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
+  padding: 9px 18px 11px;
+  border-radius: 14px;
+  background: rgba(5, 16, 34, 0.52);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(56, 214, 255, 0.15);
+  box-shadow:
+    0 10px 30px rgba(0, 4, 18, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.052);
+  max-width: 100%;
 }
 
 .fish-line-hud__icon {
   width: clamp(24px, 6vw, 34px);
   height: clamp(24px, 6vw, 34px);
+  mix-blend-mode: normal;
   filter:
-    brightness(1.08) contrast(1.08) saturate(1.05)
-    drop-shadow(0 0 8px rgba(120, 220, 255, 0.4));
+    brightness(1.07) contrast(1.06) saturate(1.08)
+    drop-shadow(0 2px 10px rgba(0, 10, 24, 0.6))
+    drop-shadow(0 0 12px rgba(72, 188, 228, 0.34));
 }
 
 .fish-line-hud__txt {
-  color: rgba(233, 241, 251, 0.88);
+  color: rgba(222, 238, 252, 0.95);
   font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.03em;
+  line-height: 1.38;
 }
 
 /* Запасной маркер при ошибке загрузки PNG */
@@ -1770,12 +1960,18 @@ body.event-snap .lake {
   width: clamp(26px, 7vw, 38px);
   height: clamp(26px, 7vw, 38px);
   font-size: clamp(1rem, 3.8vw, 1.25rem);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: inset 0 0 0 1px rgba(110, 185, 225, 0.22);
 }
 
 .fish-icon-fallback--hudLine {
   width: clamp(24px, 6vw, 34px);
   height: clamp(24px, 6vw, 34px);
   font-size: clamp(0.95rem, 3.5vw, 1.15rem);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: inset 0 0 0 1px rgba(110, 185, 225, 0.22);
 }
 
 .fish-icon-fallback--reward {
@@ -1832,6 +2028,93 @@ body.event-snap .lake {
   min-width: 0;
 }
 
+/* Обёртка и скелетон до загрузки очищенных PNG (без белой вспышки) */
+.fish-icon-host {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fish-icon-host--panel {
+  width: clamp(32px, 7vw, 42px);
+  height: clamp(32px, 7vw, 42px);
+}
+
+.fish-icon-host--hudStatus {
+  width: clamp(26px, 7vw, 38px);
+  height: clamp(26px, 7vw, 38px);
+}
+
+.fish-icon-host--hudLine {
+  width: clamp(24px, 6vw, 34px);
+  height: clamp(24px, 6vw, 34px);
+}
+
+.fish-icon-host--reward {
+  width: clamp(44px, 5.5vw, 60px);
+  height: clamp(44px, 5.5vw, 60px);
+}
+
+.fish-icon-skeleton {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 11px;
+  background: linear-gradient(152deg, rgba(5, 16, 38, 0.98), rgba(12, 32, 58, 0.88));
+  box-shadow:
+    inset 0 0 0 1px rgba(62, 130, 195, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  opacity: 1;
+  transition: opacity 0.22s ease;
+}
+
+.fish-icon-host--ready .fish-icon-skeleton {
+  opacity: 0;
+}
+
+.hist-item__fish-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: clamp(24px, 4.6vw, 32px);
+  height: clamp(24px, 4.6vw, 32px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fish-icon-skeleton--hist {
+  border-radius: 10px;
+}
+
+/* HUD catch: без тёмного «квадрата» до загрузки PNG — место под иконку пустое */
+.fish-icon-skeleton--hudStatus,
+.fish-icon-skeleton--hudLine {
+  display: none;
+}
+
+/* До загрузки очищенного data URL img скрыт (нет белой вспышки даже до применения стилей) */
+img.fish-icon--panel:not(.is-loaded),
+img.fish-icon--hist:not(.is-loaded),
+img.reward-popup__fish:not(.is-loaded),
+img.hud-status-with-fish__icon:not(.is-loaded),
+img.fish-line-hud__icon:not(.is-loaded) {
+  opacity: 0;
+  visibility: hidden;
+}
+
+img.fish-icon.is-loaded,
+img.reward-popup__fish.is-loaded,
+img.hud-status-with-fish__icon.is-loaded,
+img.fish-line-hud__icon.is-loaded {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 0.26s ease,
+    visibility 0s linear 0s;
+}
+
 /* Иконки рыб (PNG): multiply смягчает белую подложку на тёмном UI + лёгкая коррекция яркости */
 .fish-icon,
 .reward-popup__fish,
@@ -1845,6 +2128,11 @@ body.event-snap .lake {
   box-shadow: none;
   outline: none;
   mix-blend-mode: multiply;
+}
+
+.hud-status-with-fish__icon,
+.fish-line-hud__icon {
+  mix-blend-mode: normal;
 }
 
 /* Левая панель «РЫБЫ»: 32–42px (на узких экранах меньше) */
@@ -1887,6 +2175,258 @@ body.event-snap .lake {
   box-shadow: none !important;
   padding-left: 10px;
   padding-right: 10px;
+  position: relative;
+}
+
+/* Стек статусов вне боя (заброс, пустой, малёк…) */
+.hud-idle-stack--hidden {
+  display: none !important;
+}
+
+/* ---------- Центральный боевой блок: график роста множителя ---------- */
+
+.fight-chart {
+  width: 100%;
+  max-width: min(100%, 380px);
+  margin: 0 auto;
+  padding: clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 18px) clamp(12px, 3vw, 16px);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(165deg, rgba(8, 26, 48, 0.72) 0%, rgba(4, 14, 30, 0.58) 45%, rgba(3, 10, 22, 0.82) 100%);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(56, 214, 255, 0.22);
+  box-shadow:
+    0 12px 42px rgba(0, 4, 18, 0.55),
+    0 0 40px rgba(56, 214, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition:
+    border-color 0.35s ease,
+    box-shadow 0.35s ease,
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.fight-chart--hidden {
+  display: none !important;
+}
+
+.fight-chart__mult-wrap {
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.fight-chart .fight-chart__mult.multiplier {
+  font-size: clamp(2.05rem, 9.5vw, 3.65rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  background: linear-gradient(180deg, #fff9e6 0%, #e8f8ff 38%, #62dfff 72%, #38c4f0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 18px rgba(56, 214, 255, 0.45)) drop-shadow(0 4px 22px rgba(0, 8, 22, 0.9));
+}
+
+.fight-chart .fight-chart__mult.multiplier.dim {
+  opacity: 0.34;
+  filter: none;
+}
+
+.fight-chart__viz {
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+  height: clamp(82px, 20vw, 118px);
+}
+
+.fight-chart__svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+.fight-chart__curve {
+  transition: stroke-opacity 0.2s ease;
+}
+
+.fight-chart__dot {
+  transition: cx 0.1s linear, cy 0.1s linear, opacity 0.2s ease;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fightDotPulse 2.2s ease-in-out infinite;
+}
+
+.fight-chart--won .fight-chart__dot {
+  animation: none;
+  opacity: 1;
+}
+
+.fight-chart--won .fight-chart__curve {
+  stroke-opacity: 0.98;
+}
+
+@keyframes fightDotPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.88;
+  }
+}
+
+.fight-chart--risk-mid .fight-chart__curve {
+  filter: url(#fightGlow) drop-shadow(0 0 6px rgba(120, 200, 255, 0.45));
+}
+
+.fight-chart--risk-high .fight-chart__curve {
+  filter: url(#fightGlow) drop-shadow(0 0 10px rgba(180, 140, 255, 0.38));
+}
+
+.fight-chart--risk-high .fight-chart__dot {
+  stroke: rgba(230, 210, 255, 0.95);
+}
+
+.fight-chart__footer {
+  margin-top: 8px;
+  text-align: center;
+}
+
+.fight-chart .fight-chart__catch.catch-amount {
+  font-size: clamp(0.98rem, 3.8vw, 1.22rem);
+  margin-bottom: 4px;
+}
+
+.fight-chart .fight-chart__catch.catch-amount.dim {
+  opacity: 0.38;
+}
+
+.fight-chart .fight-chart__catch.catch-amount:not(.dim) {
+  text-shadow:
+    0 0 16px rgba(56, 214, 255, 0.35),
+    0 2px 14px rgba(0, 6, 18, 0.85);
+}
+
+@media (max-width: 540px) {
+  .fight-chart {
+    padding: 9px 12px 11px;
+    max-width: 100%;
+    border-radius: 14px;
+  }
+
+  .fight-chart .fight-chart__mult.multiplier:not(.dim) {
+    font-size: clamp(1.72rem, 11vw, 2.75rem);
+  }
+
+  .fight-chart__viz {
+    height: clamp(72px, 28vw, 96px);
+    max-width: 100%;
+  }
+
+  .fight-chart__footer {
+    margin-top: 6px;
+  }
+}
+
+.fight-chart__hint {
+  margin: 0;
+  font-size: clamp(0.78rem, 2.9vw, 0.9rem);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  color: rgba(198, 234, 252, 0.88);
+  text-shadow:
+    0 0 12px rgba(56, 214, 255, 0.22),
+    0 1px 10px rgba(0, 4, 16, 0.65);
+}
+
+.fight-chart--won {
+  border-color: rgba(238, 207, 82, 0.42);
+  box-shadow:
+    0 14px 48px rgba(0, 4, 18, 0.58),
+    0 0 48px rgba(238, 207, 82, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  animation: fightChartWin 0.85s cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+
+.fight-chart--won .fight-chart__mult.multiplier:not(.dim) {
+  background: linear-gradient(180deg, #fffce8 0%, #fff2a8 40%, #f0d060 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 0 22px rgba(238, 207, 82, 0.55));
+}
+
+.fight-chart--won .fight-chart__hint {
+  color: rgba(255, 244, 200, 0.92);
+  letter-spacing: 0.08em;
+}
+
+@keyframes fightChartWin {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.028);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.fight-chart--lost .fight-chart__curve {
+  animation: fightCurveSnap 0.55s cubic-bezier(0.45, 0, 0.55, 1) forwards;
+}
+
+.fight-chart--lost .fight-chart__area {
+  animation: fightFillSnap 0.55s ease forwards;
+}
+
+.fight-chart--lost .fight-chart__dot {
+  animation: fightDotSnap 0.45s ease forwards;
+}
+
+@keyframes fightCurveSnap {
+  to {
+    stroke-opacity: 0.12;
+    stroke-dasharray: 1 7;
+    filter: none;
+  }
+}
+
+@keyframes fightFillSnap {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fightDotSnap {
+  to {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+/* Скрытый DOM для tensionFill / подсказок (логика без видимой полоски) */
+.hud-hidden-meter {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  pointer-events: none;
+}
+
+.resistance-hud--telemetry {
+  max-height: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
 }
 
 .hud-value--hidden {
@@ -2130,13 +2670,6 @@ body.event-snap .lake {
   font-size: 0.78rem;
   font-variant-numeric: tabular-nums;
   border: 1px solid transparent;
-}
-
-.hist-item__fish-wrap {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 /* История: иконки 24–32px */

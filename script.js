@@ -6,7 +6,7 @@
    * @typedef {{ id: string, name: string, chance: number, startMultiplier: number, color: string }} FishType
    */
 
-  /** Единые пути к исходным PNG (fallback, если canvas-очистка не удалась). */
+  /** Единые пути к исходным PNG (preload + canvas; в UI не подставляются). */
   const fishImages = {
     malek: "./assets/fish/fish_malek.png",
     karas: "./assets/fish/fish_karas.png",
@@ -26,12 +26,12 @@
     goldfish: "gold",
   };
 
-  /** Кэш data URL после removeWhiteBackground (ключи malek, karas, …). */
-  var cleanedFishImages = {};
+  /** Кэш data URL после removeWhiteBackground (ключи malek, karas, …). Только они попадают в UI. */
+  const cleanedFishImages = {};
 
-  /** Пороги: жёсткий белый → полная прозрачность; мягкий 220–235 → снижение alpha. */
-  var FISH_WHITE_HARD = 235;
-  var FISH_WHITE_SOFT = 220;
+  /** Пороги canvas: >230 по всем каналам → alpha 0; >210 — мягкое снижение alpha до края 230. */
+  var FISH_WHITE_HARD = 230;
+  var FISH_WHITE_SOFT = 210;
 
   /**
    * Убирает близкий к белому фон у PNG через canvas (альфа → 0).
@@ -91,7 +91,32 @@
     });
   }
 
-  /** Прогон всех рыб через removeWhiteBackground → cleanedFishImages */
+  /** Предзагрузка исходных PNG перед очисткой canvas (не используется в UI напрямую). */
+  function preloadFishImages() {
+    var keys = Object.keys(fishImages);
+    return Promise.all(
+      keys.map(function (key) {
+        return new Promise(function (resolve) {
+          var path = fishImages[key];
+          var im = new Image();
+          im.onload = function () {
+            if (im.decode && typeof im.decode === "function") {
+              im.decode().then(resolve).catch(resolve);
+            } else {
+              resolve();
+            }
+          };
+          im.onerror = function () {
+            console.warn("[fish preload] failed:", key, path);
+            resolve();
+          };
+          im.src = path;
+        });
+      })
+    );
+  }
+
+  /** Прогон всех рыб через removeWhiteBackground → cleanedFishImages (data URL). */
   async function buildCleanedFishImages() {
     var keys = Object.keys(fishImages);
     await Promise.all(
@@ -101,8 +126,8 @@
           function (dataUrl) {
             cleanedFishImages[key] = dataUrl;
           },
-          function (err) {
-            console.warn("[fish icon clean] failed, using original:", path, err);
+          function () {
+            console.warn("[fish icon clean] failed:", key, path);
           }
         );
       })
@@ -112,8 +137,31 @@
   function fishIconSrc(gameFishId) {
     var imgKey = gameFishId && GAME_ID_TO_IMAGE_KEY[gameFishId];
     if (!imgKey) return "";
-    if (cleanedFishImages[imgKey]) return cleanedFishImages[imgKey];
-    return fishImages[imgKey];
+    var u = cleanedFishImages[imgKey];
+    return typeof u === "string" && u.length ? u : "";
+  }
+
+  function markFishImgLoaded(img) {
+    if (!img || img.tagName !== "IMG") return;
+    img.classList.add("is-loaded");
+    var host = img.closest(".fish-icon-host");
+    if (host) {
+      host.classList.add("fish-icon-host--ready");
+      host.querySelectorAll(".fish-icon-skeleton--hudStatus, .fish-icon-skeleton--hudLine").forEach(function (sk) {
+        sk.remove();
+      });
+    }
+  }
+
+  function bindFishImgLoaded(img) {
+    if (!img) return;
+    img.addEventListener(
+      "load",
+      function fishImgOnLoad() {
+        markFishImgLoaded(img);
+      },
+      { once: true }
+    );
   }
 
   /**
@@ -125,25 +173,93 @@
       "error",
       function handleFishIconImgError() {
         img.removeEventListener("error", handleFishIconImgError);
-        console.warn("[fish icon] failed to load:", img.src);
+        var gid = img.getAttribute("data-fish-game-id");
+        var ik = gid ? GAME_ID_TO_IMAGE_KEY[gid] : "";
+        console.warn("[fish icon] failed to load UI asset:", gid || slot, ik ? fishImages[ik] : img.src.slice(0, 72));
+        var host = img.closest(".fish-icon-host");
+        if (host) host.classList.add("fish-icon-host--ready");
         var fb = document.createElement("span");
         fb.className = "fish-icon-fallback fish-icon-fallback--" + slot;
         fb.textContent = "\uD83D\uDC1F";
         fb.setAttribute("role", "img");
         fb.setAttribute("aria-label", ariaLabel || "Рыба");
         img.replaceWith(fb);
+        if (host) {
+          host.querySelectorAll(".fish-icon-skeleton").forEach(function (sk) {
+            sk.remove();
+          });
+        }
       },
       { once: true }
     );
   }
 
   function initFishPanelIcons() {
-    document.querySelectorAll("img.fish-icon--panel[data-fish-game-id]").forEach(function (img) {
-      var gid = img.getAttribute("data-fish-game-id");
+    document.querySelectorAll(".fish-icon-host.fish-icon-host--panel[data-fish-game-id]").forEach(function (host) {
+      var gid = host.getAttribute("data-fish-game-id");
+      var alt = host.getAttribute("data-fish-alt") || "Рыба";
+      var key = GAME_ID_TO_IMAGE_KEY[gid];
+      host.classList.remove("fish-icon-host--ready");
+      host.querySelectorAll("img.fish-icon--panel, span.fish-icon-fallback").forEach(function (node) {
+        node.remove();
+      });
       var url = fishIconSrc(gid);
-      if (url) img.src = url;
-      img.loading = "eager";
-      attachFishIconErrorFallback(img, "panel", img.getAttribute("alt") || "Рыба");
+      if (url) {
+        var img = document.createElement("img");
+        img.className = "fish-icon fish-icon--panel";
+        img.setAttribute("data-fish-game-id", gid);
+        img.alt = alt;
+        img.decoding = "async";
+        img.loading = "eager";
+        bindFishImgLoaded(img);
+        attachFishIconErrorFallback(img, "panel", alt);
+        host.appendChild(img);
+        img.src = url;
+      } else {
+        console.warn("[fish icon] no cleaned asset for panel:", gid, key ? fishImages[key] : "");
+        host.classList.add("fish-icon-host--ready");
+        var fb = document.createElement("span");
+        fb.className = "fish-icon-fallback fish-icon-fallback--panel";
+        fb.textContent = "\uD83D\uDC1F";
+        fb.setAttribute("role", "img");
+        fb.setAttribute("aria-label", alt);
+        host.appendChild(fb);
+      }
+    });
+  }
+
+  /** Обновить src у строк истории, созданных до готовности cleanedFishImages. */
+  function refreshHistoryFishIcons() {
+    if (!els.historyList) return;
+    els.historyList.querySelectorAll(".hist-item__fish-wrap[data-fish-game-id]").forEach(function (wrap) {
+      var gid = wrap.getAttribute("data-fish-game-id");
+      var url = fishIconSrc(gid);
+      if (!url) return;
+      var existing = wrap.querySelector("img.fish-icon--hist");
+      if (existing) {
+        if (existing.src !== url) {
+          bindFishImgLoaded(existing);
+          attachFishIconErrorFallback(existing, "hist", "Рыба");
+          existing.src = url;
+        }
+        return;
+      }
+      wrap.classList.remove("fish-icon-host--ready");
+      wrap.replaceChildren();
+      var skH = document.createElement("span");
+      skH.className = "fish-icon-skeleton fish-icon-skeleton--hist";
+      skH.setAttribute("aria-hidden", "true");
+      var imgH = document.createElement("img");
+      imgH.className = "fish-icon fish-icon--hist";
+      imgH.setAttribute("data-fish-game-id", gid);
+      imgH.alt = "Рыба";
+      imgH.decoding = "async";
+      imgH.loading = "eager";
+      bindFishImgLoaded(imgH);
+      attachFishIconErrorFallback(imgH, "hist", "Рыба");
+      imgH.src = url;
+      wrap.appendChild(skH);
+      wrap.appendChild(imgH);
     });
   }
 
@@ -209,6 +325,12 @@
     autoCashoutState: document.getElementById("autoCashoutState"),
     autoCashoutMult: document.getElementById("autoCashoutMult"),
     autoPresets: document.getElementById("autoPresets"),
+    hudIdleStack: document.getElementById("hudIdleStack"),
+    fightChart: document.getElementById("fightChart"),
+    fightChartCurve: document.getElementById("fightChartCurve"),
+    fightChartArea: document.getElementById("fightChartArea"),
+    fightChartDot: document.getElementById("fightChartDot"),
+    fightChartHint: document.getElementById("fightChartHint"),
   };
 
   let balance = START_BALANCE;
@@ -269,7 +391,6 @@
 
     var iconKey = kind === "small" ? "malek" : fishId;
     var src = fishIconSrc(iconKey);
-    if (!src) return;
 
     var el = document.createElement("div");
     el.className = "reward-popup";
@@ -279,19 +400,40 @@
     inner.className =
       "reward-popup__inner reward-popup__inner--" + (kind === "small" ? "small" : "cashout");
 
-    var img = document.createElement("img");
-    img.className = "reward-popup__fish";
-    img.src = src;
-    img.alt = "Рыба";
-    img.decoding = "async";
-    img.loading = "eager";
-    attachFishIconErrorFallback(img, "reward", "Рыба");
+    var iconWrap = document.createElement("span");
+    iconWrap.className = "fish-icon-host fish-icon-host--reward";
+
+    if (src) {
+      var skR = document.createElement("span");
+      skR.className = "fish-icon-skeleton fish-icon-skeleton--reward";
+      skR.setAttribute("aria-hidden", "true");
+      var img = document.createElement("img");
+      img.className = "reward-popup__fish";
+      img.alt = "Рыба";
+      img.decoding = "async";
+      img.loading = "eager";
+      bindFishImgLoaded(img);
+      attachFishIconErrorFallback(img, "reward", "Рыба");
+      img.src = src;
+      iconWrap.appendChild(skR);
+      iconWrap.appendChild(img);
+    } else {
+      var ik = GAME_ID_TO_IMAGE_KEY[iconKey];
+      console.warn("[fish icon] reward popup: no cleaned asset for", iconKey, ik ? fishImages[ik] : "");
+      iconWrap.classList.add("fish-icon-host--ready");
+      var fbR = document.createElement("span");
+      fbR.className = "fish-icon-fallback fish-icon-fallback--reward";
+      fbR.textContent = "\uD83D\uDC1F";
+      fbR.setAttribute("role", "img");
+      fbR.setAttribute("aria-label", "Рыба");
+      iconWrap.appendChild(fbR);
+    }
 
     var amt = document.createElement("span");
     amt.className = "reward-popup__amount";
     amt.textContent = "+" + amountFormatted + " ₸";
 
-    inner.appendChild(img);
+    inner.appendChild(iconWrap);
     inner.appendChild(amt);
     el.appendChild(inner);
 
@@ -529,79 +671,25 @@
           "Малёк. Возврат " + formatMoney(currentWin()) + " ₸";
         break;
       case "bite":
-        els.statusText.textContent = "КЛЁВ!";
+        els.statusText.textContent = "";
         break;
       case "reeling":
         els.statusText.textContent = "";
-        if (currentFish) {
-          var urlReel = fishIconSrc(currentFish.id);
-          if (urlReel) {
-            var wrapSt = document.createElement("span");
-            wrapSt.className = "hud-status-with-fish";
-            var imgSt = document.createElement("img");
-            imgSt.className = "hud-status-with-fish__icon";
-            imgSt.src = urlReel;
-            imgSt.alt = "Иконка рыбы";
-            imgSt.decoding = "async";
-            imgSt.loading = "eager";
-            attachFishIconErrorFallback(imgSt, "hudStatus", "Рыба на крючке");
-            var msgSt = document.createElement("span");
-            msgSt.className = "hud-status-with-fish__msg";
-            msgSt.textContent = "На крючке — забери в садок или тяни дальше.";
-            wrapSt.appendChild(imgSt);
-            wrapSt.appendChild(msgSt);
-            els.statusText.appendChild(wrapSt);
-          } else {
-            els.statusText.textContent =
-              "На крючке — забери в садок или тяни дальше.";
-          }
-        }
         break;
       case "cashedOut":
-        els.statusText.textContent =
-          "Улов в садке! +" + formatMoney(currentWin()) + " ₸";
+        els.statusText.textContent = "";
         break;
       case "snapped":
-        els.statusText.textContent = "Леска порвалась. Улов потерян.";
+        els.statusText.textContent = "";
         break;
       default:
         break;
     }
   }
 
-  /** Подпись под множителем: иконка рыбы + сумма на крючке */
+  /** Линия рыбы на HUD: перенесено в fight-chart (иконка/сумма там же). */
   function syncFishLine() {
-    if (phase === "bite" || phase === "reeling") {
-      els.fishLine.textContent = "";
-      if (currentFish) {
-        var urlLine = fishIconSrc(currentFish.id);
-        if (urlLine) {
-          var wrapLn = document.createElement("span");
-          wrapLn.className = "fish-line-hud";
-          var imgLn = document.createElement("img");
-          imgLn.className = "fish-line-hud__icon";
-          imgLn.src = urlLine;
-          imgLn.alt = "Иконка рыбы";
-          imgLn.decoding = "async";
-          imgLn.loading = "eager";
-          attachFishIconErrorFallback(imgLn, "hudLine", "Рыба");
-          var txtLn = document.createElement("span");
-          txtLn.className = "fish-line-hud__txt";
-          txtLn.textContent = "На крючке — " + formatMoney(currentWin()) + " ₸";
-          wrapLn.appendChild(imgLn);
-          wrapLn.appendChild(txtLn);
-          els.fishLine.appendChild(wrapLn);
-        } else {
-          els.fishLine.textContent =
-            "На крючке — " + formatMoney(currentWin()) + " ₸";
-        }
-      }
-      return;
-    }
-    if (phase === "casting") {
-      els.fishLine.innerHTML = "&nbsp;";
-      return;
-    }
+    if (!els.fishLine) return;
     els.fishLine.innerHTML = "&nbsp;";
   }
 
@@ -624,7 +712,9 @@
       phaseKey === "cashedOut" ||
       phaseKey === "snapped"
     ) {
-      const sag = 69 + Math.sin(Date.now() / 900) * 1.2;
+      var sagAmp = phaseKey === "idle" ? 0.35 : 0.55;
+      var sagPeriod = phaseKey === "idle" ? 2400 : 1500;
+      const sag = 69 + Math.sin(Date.now() / sagPeriod) * sagAmp;
       path.setAttribute(
         "d",
         "M " + tipX + " " + tipY + " Q " + (tipX + hookX) / 2 + " " + sag + " " + hookX + " " + hookY
@@ -674,12 +764,143 @@
     if (els.waterZone) els.waterZone.classList.toggle("resistance-intense", pct > 73);
   }
 
-  /** Блок «СОПРОТИВЛЕНИЕ РЫБЫ» — только bite / reeling */
+  /** Старый блок полоски скрыт; телеметрия сопротивления остаётся для логики и графика. */
   function syncResistanceHudVisibility() {
     if (!els.resistanceHud) return;
-    var show = phase === "bite" || phase === "reeling";
-    els.resistanceHud.classList.toggle("resistance-hud--visible", show);
-    els.resistanceHud.setAttribute("aria-hidden", show ? "false" : "true");
+    els.resistanceHud.classList.remove("resistance-hud--visible");
+    els.resistanceHud.setAttribute("aria-hidden", "true");
+  }
+
+  function syncFightChartHint() {
+    if (!els.fightChartHint) return;
+    if (phase === "bite") {
+      els.fightChartHint.textContent = "На крючке";
+      return;
+    }
+    if (phase === "reeling") {
+      var pct = resistanceMeterPercent();
+      if (pct < 40) els.fightChartHint.textContent = "Тяни дальше";
+      else if (pct < 68) els.fightChartHint.textContent = "Рыба сопротивляется";
+      else els.fightChartHint.textContent = "Риск растёт";
+      return;
+    }
+    if (phase === "cashedOut") {
+      els.fightChartHint.textContent = "В садке!";
+      return;
+    }
+    if (phase === "snapped") {
+      els.fightChartHint.textContent = "Обрыв!";
+      return;
+    }
+    els.fightChartHint.innerHTML = "&nbsp;";
+  }
+
+  function updateFightChart() {
+    if (!els.fightChart || !els.fightChartCurve || !els.fightChartArea || !els.fightChartDot || !currentFish) {
+      return;
+    }
+    var chartPhase =
+      phase === "bite" ||
+      phase === "reeling" ||
+      phase === "cashedOut" ||
+      phase === "snapped";
+    if (!chartPhase) return;
+
+    els.fightChart.classList.toggle("fight-chart--won", phase === "cashedOut");
+    els.fightChart.classList.toggle("fight-chart--lost", phase === "snapped");
+
+    var sm = currentFish.startMultiplier;
+    var range = Math.max(crashPoint - sm, 0.08);
+    var prog = Math.min(1, Math.max(0, (currentMultiplier - sm) / range));
+
+    var resistNorm =
+      phase === "reeling"
+        ? resistanceMeterPercent() / 100
+        : phase === "bite"
+          ? 0.18
+          : phase === "snapped"
+            ? 1
+            : 0;
+
+    if (phase === "bite") prog = Math.min(prog, 0.035);
+
+    var steps = 40;
+    var pts = [];
+    var bottom = 34;
+    var i;
+    var t;
+    var x;
+    var multAlong;
+    var yn;
+    var breathe;
+    var arch;
+    var y;
+
+    for (i = 0; i <= steps; i++) {
+      t = i / steps;
+      x = t * 100 * prog;
+      if (prog < 0.012 && i > 3) break;
+      multAlong = sm + t * (currentMultiplier - sm);
+      yn = Math.min(1, Math.max(0, (multAlong - sm) / range));
+      breathe =
+        Math.sin(Date.now() / 460 + t * 6 + resistanceVisualSeed * 0.02) * 0.38 * resistNorm;
+      arch = Math.sin(t * Math.PI) * (1.05 + resistNorm * 1.28);
+      y = bottom - yn * 24 - arch + breathe;
+      pts.push({ x: x, y: y });
+    }
+
+    if (pts.length < 2) {
+      pts = [
+        { x: 0, y: bottom - 0.8 },
+        { x: Math.max(2.5, 100 * prog * 0.08), y: bottom - 1.2 },
+      ];
+    }
+
+    /** Лёгкое сглаживание по Y — меньше «ломаности», плавнее рост кривой */
+    function smoothChartPts(raw) {
+      if (raw.length < 3) return raw;
+      var out = [];
+      var j;
+      out.push(raw[0]);
+      for (j = 1; j < raw.length - 1; j++) {
+        out.push({
+          x: raw[j].x,
+          y: (raw[j - 1].y + raw[j].y * 2 + raw[j + 1].y) / 4,
+        });
+      }
+      out.push(raw[raw.length - 1]);
+      return out;
+    }
+
+    pts = smoothChartPts(pts);
+
+    var lineD = pts
+      .map(function (p, ii) {
+        return (ii === 0 ? "M " : " L ") + p.x.toFixed(2) + " " + p.y.toFixed(2);
+      })
+      .join("");
+
+    var last = pts[pts.length - 1];
+    var fillD =
+      lineD +
+      " L " +
+      last.x.toFixed(2) +
+      " " +
+      bottom +
+      " L 0 " +
+      bottom +
+      " Z";
+
+    els.fightChartCurve.setAttribute("d", lineD);
+    els.fightChartArea.setAttribute("d", fillD);
+    els.fightChartDot.setAttribute("cx", last.x.toFixed(2));
+    els.fightChartDot.setAttribute("cy", last.y.toFixed(2));
+
+    els.fightChart.classList.toggle("fight-chart--risk-high", phase === "reeling" && resistNorm > 0.72);
+    els.fightChart.classList.toggle(
+      "fight-chart--risk-mid",
+      phase === "reeling" && resistNorm > 0.38 && resistNorm <= 0.72
+    );
   }
 
   function renderRoundVisuals() {
@@ -689,7 +910,23 @@
     /** Показ × и суммы: только клёв / вываживание / финал раунда */
     const showFightValues =
       bite || reeling || phase === "cashedOut" || phase === "snapped";
-    const showFishFightLine = bite || reeling;
+    const showFightChart = showFightValues;
+
+    if (els.hudIdleStack) {
+      els.hudIdleStack.classList.toggle("hud-idle-stack--hidden", !!showFightChart);
+    }
+    if (els.fightChart) {
+      els.fightChart.classList.toggle("fight-chart--hidden", !showFightChart);
+      els.fightChart.setAttribute("aria-hidden", showFightChart ? "false" : "true");
+      if (!showFightChart) {
+        els.fightChart.classList.remove(
+          "fight-chart--won",
+          "fight-chart--lost",
+          "fight-chart--risk-high",
+          "fight-chart--risk-mid"
+        );
+      }
+    }
 
     if (els.hudCenter) els.hudCenter.classList.toggle("hud-center--fight", fightHud);
 
@@ -698,7 +935,10 @@
       els.multDisplay.textContent = formatMult(1);
     }
 
-    els.multDisplay.classList.toggle("dim", !fightHud);
+    els.multDisplay.classList.toggle(
+      "dim",
+      !(bite || reeling || phase === "cashedOut" || phase === "snapped")
+    );
 
     if (fightHud || phase === "smallCatch") {
       els.catchDisplay.textContent = formatMoney(currentWin()) + " ₸";
@@ -714,7 +954,7 @@
       els.catchDisplay.textContent = "0 ₸";
     }
 
-    els.catchDisplay.classList.toggle("dim", !fightHud);
+    els.catchDisplay.classList.toggle("dim", !(bite || reeling || phase === "cashedOut"));
 
     if (els.multDisplay) {
       els.multDisplay.classList.toggle("hud-value--hidden", !showFightValues);
@@ -725,8 +965,8 @@
       els.catchDisplay.setAttribute("aria-hidden", showFightValues ? "false" : "true");
     }
     if (els.fishLine) {
-      els.fishLine.classList.toggle("hud-value--hidden", !showFishFightLine);
-      els.fishLine.setAttribute("aria-hidden", showFishFightLine ? "false" : "true");
+      els.fishLine.classList.add("hud-value--hidden");
+      els.fishLine.setAttribute("aria-hidden", "true");
     }
 
     updateResistanceVisual();
@@ -765,6 +1005,8 @@
 
     syncStatusText();
     syncFishLine();
+    updateFightChart();
+    syncFightChartHint();
 
     syncBodyClasses();
     syncEventFeedback();
@@ -829,17 +1071,36 @@
     const row = document.createElement("div");
     row.className = "hist-item " + className;
     var srcHist = fishId && fishIconSrc(fishId);
-    if (srcHist) {
+    if (fishId && GAME_ID_TO_IMAGE_KEY[fishId]) {
       var wrapH = document.createElement("span");
       wrapH.className = "hist-item__fish-wrap";
-      var imgH = document.createElement("img");
-      imgH.className = "fish-icon fish-icon--hist";
-      imgH.src = srcHist;
-      imgH.alt = "Рыба";
-      imgH.decoding = "async";
-      imgH.loading = "eager";
-      attachFishIconErrorFallback(imgH, "hist", "Рыба");
-      wrapH.appendChild(imgH);
+      wrapH.setAttribute("data-fish-game-id", fishId);
+      if (srcHist) {
+        var skH = document.createElement("span");
+        skH.className = "fish-icon-skeleton fish-icon-skeleton--hist";
+        skH.setAttribute("aria-hidden", "true");
+        var imgH = document.createElement("img");
+        imgH.className = "fish-icon fish-icon--hist";
+        imgH.setAttribute("data-fish-game-id", fishId);
+        imgH.alt = "Рыба";
+        imgH.decoding = "async";
+        imgH.loading = "eager";
+        bindFishImgLoaded(imgH);
+        attachFishIconErrorFallback(imgH, "hist", "Рыба");
+        imgH.src = srcHist;
+        wrapH.appendChild(skH);
+        wrapH.appendChild(imgH);
+      } else {
+        var hKey = GAME_ID_TO_IMAGE_KEY[fishId];
+        console.warn("[fish icon] history: no cleaned asset for", fishId, hKey ? fishImages[hKey] : "");
+        wrapH.classList.add("fish-icon-host--ready");
+        var fbH = document.createElement("span");
+        fbH.className = "fish-icon-fallback fish-icon-fallback--hist";
+        fbH.textContent = "\uD83D\uDC1F";
+        fbH.setAttribute("role", "img");
+        fbH.setAttribute("aria-label", "Рыба");
+        wrapH.appendChild(fbH);
+      }
       row.appendChild(wrapH);
     } else if (className === "hist-empty") {
       var mkEmpty = document.createElement("span");
@@ -1309,9 +1570,14 @@
 
   window.addEventListener("resize", syncHistoryLayout);
 
-  buildCleanedFishImages()
+  preloadFishImages()
+    .then(function () {
+      return buildCleanedFishImages();
+    })
     .finally(function () {
       initFishPanelIcons();
+      refreshHistoryFishIcons();
+      renderRoundVisuals();
     });
 
   clampBet();
