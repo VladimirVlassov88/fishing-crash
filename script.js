@@ -22,8 +22,13 @@
   const HISTORY_CAP = 8;
   /** Пауза перед возвратом в idle после краша / ручного садка */
   const ROUND_END_MS = 1500;
-  /** Пустой заброс и мелкий клёв: ровно 1.2 с перед idle */
+  /** Пустой заброс и малёк: ровно 1.2 с перед idle */
   const MINOR_ROUND_MS = 1200;
+  /** Длительности одноразового FX при fish (только визуал). */
+  const BITE_SPLASH_ANIM_MS = 1040;
+  const BITE_CALLOUT_BURST_MS = 1020;
+  const BITE_SCREEN_SHAKE_MS = 320;
+  const BITE_SCENE_FLASH_MS = 260;
   /** Максимальный множитель обрыва в прототипе */
   const CRASH_MULT_CAP = 20;
 
@@ -37,6 +42,7 @@
     fishLine: document.getElementById("fishLine"),
     tensionFill: document.getElementById("tensionFill"),
     resistanceHint: document.getElementById("resistanceHint"),
+    hudCenter: document.getElementById("hudCenter"),
     historyList: document.getElementById("historyList"),
     historyPanel: document.getElementById("historyPanel"),
     histToggle: document.getElementById("histToggle"),
@@ -54,6 +60,12 @@
     flashSoftCyan: document.getElementById("flashSoftCyan"),
     flashBite: document.getElementById("flashBite"),
     biteCallout: document.getElementById("biteCallout"),
+    biteSplash: document.getElementById("biteSplash"),
+    resistanceHud: document.getElementById("resistanceHud"),
+    biteSceneFlash: document.getElementById("biteSceneFlash"),
+    rewardPopupLayer: document.getElementById("rewardPopupLayer"),
+    rewardPopup: document.getElementById("rewardPopup"),
+    rewardPopupText: document.getElementById("rewardPopupText"),
     autoCashoutToggle: document.getElementById("autoCashoutToggle"),
     autoCashoutState: document.getElementById("autoCashoutState"),
     autoCashoutMult: document.getElementById("autoCashoutMult"),
@@ -85,6 +97,11 @@
   /** Случайная фаза колебаний индикатора «сопротивление» за раунд. */
   let resistanceVisualSeed = 0;
 
+  /** Таймер на случай, если animationend не сработает */
+  let rewardPopupFallbackTimer = 0;
+  /** Защита от animationend предыдущего показа при быстром повторном вызове */
+  let rewardPopupGen = 0;
+
   const EVENT_BODY_CLASSES = [
     "event-no-catch",
     "event-small-catch",
@@ -105,6 +122,58 @@
       if (!nav || typeof nav.vibrate !== "function") return;
       nav.vibrate(pattern);
     } catch (e) {}
+  }
+
+  function hideRewardPopupLayer() {
+    window.clearTimeout(rewardPopupFallbackTimer);
+    rewardPopupFallbackTimer = 0;
+    if (!els.rewardPopupLayer || !els.rewardPopup) return;
+    els.rewardPopupLayer.classList.remove("reward-popup-layer--show");
+    els.rewardPopupLayer.setAttribute("aria-hidden", "true");
+    els.rewardPopup.classList.remove(
+      "reward-popup--small",
+      "reward-popup--cashout",
+      "reward-popup--anim-soft",
+      "reward-popup--anim-cash"
+    );
+  }
+
+  /**
+   * Временный popup награды (малёк / садок). Не вызывать для idle, noCatch, bite, reeling, snapped.
+   * @param {"small"|"cashout"} kind
+   * @param {string} text
+   */
+  function showRewardPopup(kind, text) {
+    if (!els.rewardPopupLayer || !els.rewardPopup || !els.rewardPopupText) return;
+    hideRewardPopupLayer();
+    rewardPopupGen++;
+    var myGen = rewardPopupGen;
+
+    els.rewardPopupText.textContent = text;
+    els.rewardPopup.classList.add(kind === "small" ? "reward-popup--small" : "reward-popup--cashout");
+
+    els.rewardPopupLayer.classList.add("reward-popup-layer--show");
+    els.rewardPopupLayer.setAttribute("aria-hidden", "false");
+
+    void els.rewardPopup.offsetWidth;
+
+    els.rewardPopup.classList.add(kind === "small" ? "reward-popup--anim-soft" : "reward-popup--anim-cash");
+
+    var finished = false;
+    function finish(ev) {
+      if (finished || myGen !== rewardPopupGen) return;
+      if (ev && ev.animationName && ev.animationName.indexOf("rewardPopup") !== 0) return;
+      finished = true;
+      window.clearTimeout(rewardPopupFallbackTimer);
+      rewardPopupFallbackTimer = 0;
+      els.rewardPopup.removeEventListener("animationend", finish);
+      hideRewardPopupLayer();
+    }
+
+    els.rewardPopup.addEventListener("animationend", finish);
+    rewardPopupFallbackTimer = window.setTimeout(function () {
+      finish();
+    }, kind === "small" ? 1920 : 2350);
   }
 
   /** Короткие щелчки катушки (имитация смотки лески при пустом забросе). */
@@ -205,7 +274,7 @@
   }
 
   /**
-   * Исход заброса после casting: 40% пусто, 20% мелочь, 40% рыба (вид — только через pickFish()).
+   * Исход заброса после casting: 40% пусто, 20% малёк, 40% рыба (вид — только через pickFish()).
    * @returns {{ type: 'noCatch' } | { type: 'smallCatch' } | { type: 'fish' }}
    */
   function rollCastOutcome() {
@@ -309,30 +378,22 @@
         break;
       case "smallCatch":
         els.statusText.textContent =
-          "Мелкий клёв. Возврат " + formatMoney(currentWin()) + " ₸";
+          "Малёк. Возврат " + formatMoney(currentWin()) + " ₸";
         break;
       case "bite":
-        if (currentFish) {
-          els.statusText.textContent =
-            currentFish.name +
-            " на крючке — " +
-            formatMoney(currentWin()) +
-            " ₸. Забери в садок или тяни дальше.";
-        } else {
-          els.statusText.textContent = "КЛЁВ!";
-        }
+        els.statusText.textContent = "КЛЁВ!";
         break;
       case "reeling":
         if (currentFish) {
           els.statusText.textContent =
-            currentFish.name +
-            " на крючке — " +
-            formatMoney(currentWin()) +
-            " ₸. Забери в садок или тяни дальше.";
+            currentFish.name + " на крючке — забери в садок или тяни дальше.";
+        } else {
+          els.statusText.textContent = "";
         }
         break;
       case "cashedOut":
-        els.statusText.textContent = "Улов в садке!";
+        els.statusText.textContent =
+          "Улов в садке! +" + formatMoney(currentWin()) + " ₸";
         break;
       case "snapped":
         els.statusText.textContent = "Леска порвалась. Улов потерян.";
@@ -427,31 +488,59 @@
     if (els.waterZone) els.waterZone.classList.toggle("resistance-intense", pct > 73);
   }
 
+  /** Блок «СОПРОТИВЛЕНИЕ РЫБЫ» — только bite / reeling */
+  function syncResistanceHudVisibility() {
+    if (!els.resistanceHud) return;
+    var show = phase === "bite" || phase === "reeling";
+    els.resistanceHud.classList.toggle("resistance-hud--visible", show);
+    els.resistanceHud.setAttribute("aria-hidden", show ? "false" : "true");
+  }
+
   function renderRoundVisuals() {
     const reeling = phase === "reeling";
     const bite = phase === "bite";
-    const showMult = reeling || bite;
+    const fightHud = reeling || bite;
+    /** Показ × и суммы: только клёв / вываживание / финал раунда */
+    const showFightValues =
+      bite || reeling || phase === "cashedOut" || phase === "snapped";
+    const showFishFightLine = bite || reeling;
+
+    if (els.hudCenter) els.hudCenter.classList.toggle("hud-center--fight", fightHud);
 
     els.multDisplay.textContent = formatMult(currentMultiplier);
-    els.multDisplay.classList.toggle("dim", !showMult);
+    if (phase === "noCatch") {
+      els.multDisplay.textContent = formatMult(1);
+    }
 
-    if (reeling || bite) {
-      els.catchDisplay.textContent = formatMoney(currentWin()) + " ₸";
-    } else if (phase === "smallCatch") {
-      els.multDisplay.textContent = formatMult(currentMultiplier);
-      els.multDisplay.classList.remove("dim");
+    els.multDisplay.classList.toggle("dim", !fightHud);
+
+    if (fightHud || phase === "smallCatch") {
       els.catchDisplay.textContent = formatMoney(currentWin()) + " ₸";
     } else if (phase === "noCatch") {
-      els.multDisplay.textContent = formatMult(1);
-      els.multDisplay.classList.add("dim");
       els.catchDisplay.textContent = "0 ₸";
+    } else if (phase === "cashedOut") {
+      els.catchDisplay.textContent = formatMoney(currentWin()) + " ₸";
     } else if (
       phase === "idle" ||
       phase === "casting" ||
-      phase === "cashedOut" ||
       phase === "snapped"
     ) {
       els.catchDisplay.textContent = "0 ₸";
+    }
+
+    els.catchDisplay.classList.toggle("dim", !fightHud);
+
+    if (els.multDisplay) {
+      els.multDisplay.classList.toggle("hud-value--hidden", !showFightValues);
+      els.multDisplay.setAttribute("aria-hidden", showFightValues ? "false" : "true");
+    }
+    if (els.catchDisplay) {
+      els.catchDisplay.classList.toggle("hud-value--hidden", !showFightValues);
+      els.catchDisplay.setAttribute("aria-hidden", showFightValues ? "false" : "true");
+    }
+    if (els.fishLine) {
+      els.fishLine.classList.toggle("hud-value--hidden", !showFishFightLine);
+      els.fishLine.setAttribute("aria-hidden", showFishFightLine ? "false" : "true");
     }
 
     updateResistanceVisual();
@@ -488,17 +577,12 @@
     else if (bite) lineTension = 0.22;
     updateFishingLine(lineTension, phase);
 
-    if (bite || reeling) {
-      syncStatusText();
-      syncFishLine();
-    }
-
-    if (els.biteCallout) {
-      els.biteCallout.classList.toggle("bite-callout--show", bite);
-    }
+    syncStatusText();
+    syncFishLine();
 
     syncBodyClasses();
     syncEventFeedback();
+    syncResistanceHudVisibility();
   }
 
   function flash(el, ms) {
@@ -507,6 +591,51 @@
     window.setTimeout(function () {
       el.classList.remove("show");
     }, ms);
+  }
+
+  /** Всплеск на воде + «КЛЁВ!» только при outcome fish → фаза bite (вызывается один раз). */
+  function triggerBiteSplashEffects() {
+    document.body.classList.remove("bite-shake");
+    void document.body.offsetWidth;
+    document.body.classList.add("bite-shake");
+    window.setTimeout(function () {
+      document.body.classList.remove("bite-shake");
+    }, BITE_SCREEN_SHAKE_MS);
+
+    if (els.biteSceneFlash) {
+      els.biteSceneFlash.classList.remove("bite-scene-flash--anim");
+      void els.biteSceneFlash.offsetWidth;
+      els.biteSceneFlash.classList.add("bite-scene-flash--anim");
+      els.biteSceneFlash.setAttribute("aria-hidden", "false");
+      window.setTimeout(function () {
+        if (!els.biteSceneFlash) return;
+        els.biteSceneFlash.classList.remove("bite-scene-flash--anim");
+        els.biteSceneFlash.setAttribute("aria-hidden", "true");
+      }, BITE_SCENE_FLASH_MS);
+    }
+
+    if (els.biteSplash) {
+      els.biteSplash.classList.remove("bite-splash--anim");
+      void els.biteSplash.offsetWidth;
+      els.biteSplash.classList.add("bite-splash--anim");
+      els.biteSplash.setAttribute("aria-hidden", "false");
+      window.setTimeout(function () {
+        if (!els.biteSplash) return;
+        els.biteSplash.classList.remove("bite-splash--anim");
+        els.biteSplash.setAttribute("aria-hidden", "true");
+      }, BITE_SPLASH_ANIM_MS + 90);
+    }
+    if (els.biteCallout) {
+      els.biteCallout.classList.remove("bite-callout--burst");
+      void els.biteCallout.offsetWidth;
+      els.biteCallout.classList.add("bite-callout--burst");
+      els.biteCallout.setAttribute("aria-hidden", "false");
+      window.setTimeout(function () {
+        if (!els.biteCallout) return;
+        els.biteCallout.classList.remove("bite-callout--burst");
+        els.biteCallout.setAttribute("aria-hidden", "true");
+      }, BITE_CALLOUT_BURST_MS + 60);
+    }
   }
 
   /** История: последние 8, новые сверху */
@@ -618,10 +747,6 @@
       );
     }
 
-    els.multDisplay.textContent = formatMult(1);
-    els.multDisplay.classList.add("dim");
-    els.catchDisplay.textContent = "0 ₸";
-    els.fishLine.innerHTML = "&nbsp;";
     els.tensionFill.style.width = "0%";
     els.tensionFill.classList.remove("resist-band-soft", "resist-band-medium", "resist-band-high");
     if (els.resistanceHint) els.resistanceHint.innerHTML = "&nbsp;";
@@ -634,8 +759,24 @@
       "is-win",
       "is-snap"
     );
+    document.body.classList.remove("bite-shake");
     clearEventBodyClasses();
-    if (els.biteCallout) els.biteCallout.classList.remove("bite-callout--show");
+    if (els.biteCallout) {
+      els.biteCallout.classList.remove("bite-callout--show", "bite-callout--burst");
+      els.biteCallout.setAttribute("aria-hidden", "true");
+    }
+    if (els.biteSceneFlash) {
+      els.biteSceneFlash.classList.remove("bite-scene-flash--anim");
+      els.biteSceneFlash.setAttribute("aria-hidden", "true");
+    }
+    if (els.biteSplash) {
+      els.biteSplash.classList.remove("bite-splash--anim");
+      els.biteSplash.setAttribute("aria-hidden", "true");
+    }
+    if (els.resistanceHud) {
+      els.resistanceHud.classList.remove("resistance-hud--visible");
+      els.resistanceHud.setAttribute("aria-hidden", "true");
+    }
 
     clampBet();
     refreshMoneyUI();
@@ -643,6 +784,7 @@
     syncStatusText();
     syncFishLine();
     updateFishingLine(0, "idle");
+    renderRoundVisuals();
   }
 
   function loop(ts) {
@@ -756,6 +898,11 @@
       histClassWin(mult)
     );
 
+    showRewardPopup(
+      "cashout",
+      (name || "Улов") + " +" + formatMoney(payout) + " ₸"
+    );
+
     refreshMoneyUI();
     syncStatusText();
     syncFishLine();
@@ -842,7 +989,7 @@
         balance += smallWin;
         if (els.flashSoftCyan) flash(els.flashSoftCyan, 260);
         pushHistory(
-          "<span>Мелочь x" +
+          "<span>Малёк x" +
             currentMultiplier.toFixed(2) +
             " +" +
             formatMoney(smallWin) +
@@ -854,6 +1001,7 @@
         syncStatusText();
         syncFishLine();
         renderRoundVisuals();
+        showRewardPopup("small", "Малёк +" + formatMoney(smallWin) + " ₸");
         window.setTimeout(function () {
           if (phase !== "smallCatch") return;
           enterIdle();
@@ -866,6 +1014,7 @@
       currentMultiplier = currentFish.startMultiplier;
       if (els.flashBite) flash(els.flashBite, 320);
       triggerVibration([100, 40, 140]);
+      triggerBiteSplashEffects();
 
       syncButtons();
       syncStatusText();
