@@ -104,6 +104,8 @@
     <span class="bite-callout__text">КЛЁВ!</span>
   </div>
 
+  <div class="reward-popup-layer" id="rewardPopupLayer" aria-hidden="true"></div>
+
   <div class="app">
     <header class="top-bar">
       <div class="brand">
@@ -125,11 +127,36 @@
     <div class="main-grid">
       <aside class="panel panel-left glass">
         <h2>РЫБЫ</h2>
-        <div class="fish-row crucian"><span class="fish-dot"></span><span>Карась</span><span class="fish-meta">×1.2</span></div>
-        <div class="fish-row perch"><span class="fish-dot"></span><span>Окунь</span><span class="fish-meta">×2</span></div>
-        <div class="fish-row pike"><span class="fish-dot"></span><span>Щука</span><span class="fish-meta">×3.5</span></div>
-        <div class="fish-row catfish"><span class="fish-dot"></span><span>Сом</span><span class="fish-meta">×6</span></div>
-        <div class="fish-row goldfish"><span class="fish-dot"></span><span>Золотая рыба</span><span class="fish-meta">×10</span></div>
+        <div class="fish-row fish-row--malek">
+          <img class="fish-icon fish-icon--panel" data-fish-game-id="malek" src="./assets/fish/fish_malek.png" alt="Малёк" loading="eager" decoding="async" />
+          <span class="fish-row__name">Малёк</span>
+          <span class="fish-meta">×0.3–×0.8 · возврат</span>
+        </div>
+        <div class="fish-row crucian">
+          <img class="fish-icon fish-icon--panel" data-fish-game-id="crucian" src="./assets/fish/fish_karas.png" alt="Карась" loading="eager" decoding="async" />
+          <span class="fish-row__name">Карась</span>
+          <span class="fish-meta">×1.2</span>
+        </div>
+        <div class="fish-row perch">
+          <img class="fish-icon fish-icon--panel" data-fish-game-id="perch" src="./assets/fish/fish_okun.png" alt="Окунь" loading="eager" decoding="async" />
+          <span class="fish-row__name">Окунь</span>
+          <span class="fish-meta">×2</span>
+        </div>
+        <div class="fish-row pike">
+          <img class="fish-icon fish-icon--panel" data-fish-game-id="pike" src="./assets/fish/fish_shuka.png" alt="Щука" loading="eager" decoding="async" />
+          <span class="fish-row__name">Щука</span>
+          <span class="fish-meta">×3.5</span>
+        </div>
+        <div class="fish-row catfish">
+          <img class="fish-icon fish-icon--panel" data-fish-game-id="catfish" src="./assets/fish/fish_som.png" alt="Сом" loading="eager" decoding="async" />
+          <span class="fish-row__name">Сом</span>
+          <span class="fish-meta">×6</span>
+        </div>
+        <div class="fish-row goldfish">
+          <img class="fish-icon fish-icon--panel" data-fish-game-id="goldfish" src="./assets/fish/fish_gold.png" alt="Золотая рыба" loading="eager" decoding="async" />
+          <span class="fish-row__name">Золотая рыба</span>
+          <span class="fish-meta">×10</span>
+        </div>
       </aside>
 
       <section class="panel panel-center hud-center" id="hudCenter">
@@ -207,12 +234,6 @@
             <button type="button" class="btn-preset" data-mult="5">×5</button>
           </div>
         </div>
-      </div>
-    </div>
-
-    <div class="reward-popup-layer" id="rewardPopupLayer" aria-hidden="true">
-      <div class="reward-popup" id="rewardPopup" role="status">
-        <span class="reward-popup__text" id="rewardPopupText"></span>
       </div>
     </div>
 
