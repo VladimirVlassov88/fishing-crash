@@ -26,6 +26,8 @@
   /* Награда поверх UI приложения, ниже полноэкранных flash */
   --z-reward-popup: 46;
   --z-flash: 50;
+  /* Стартовый экран поверх интерфейса до первого взаимодействия */
+  --z-start-screen: 60;
   /* Полноэкранный текстовый оверлей ночного бонуса: над UI, под вспышками клёва */
   --z-moon-bonus-transition: 44;
   /* Единая точка входа в воду (ripple / splash / декор-кольца) */
@@ -58,6 +60,38 @@ body {
   color: var(--text);
   background: transparent;
   overflow-x: hidden;
+}
+
+/* ---------- Стартовый экран ---------- */
+
+.start-screen {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-start-screen);
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  background-color: var(--bg-deep);
+  opacity: 1;
+  transition: opacity 0.55s ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.start-screen.is-dismissed {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.start-screen__img {
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+  pointer-events: none;
 }
 
 img {
@@ -1866,6 +1900,70 @@ body.is-reeling .fish-silhouette.visible .fish-underwater-shape {
     transform: scale(0.88) translateY(22px);
     opacity: 0;
     filter: blur(10px);
+  }
+}
+
+/* Крупный выигрыш (кэшаут): x10 / x15 к ставке — премиальная неоновая надпись по центру */
+.big-win-callout {
+  position: fixed;
+  inset: 0;
+  z-index: 48;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: min(16vh, 120px) min(20px, 4vw);
+  visibility: hidden;
+}
+
+.big-win-callout.big-win-callout--show {
+  visibility: visible;
+}
+
+.big-win-callout.big-win-callout--show .big-win-callout__text {
+  animation: bigWinCalloutAnim 1.5s cubic-bezier(0.42, 0.02, 0.22, 1) forwards;
+}
+
+.big-win-callout__text {
+  font-size: clamp(1.65rem, 7vw, 3.1rem);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-indent: 0.12em;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.12;
+  max-width: min(94vw, 520px);
+  color: #ecfaff;
+  text-shadow:
+    0 0 14px rgba(186, 252, 255, 0.95),
+    0 0 32px rgba(56, 214, 255, 0.72),
+    0 0 72px rgba(32, 150, 220, 0.35),
+    0 4px 28px rgba(0, 6, 18, 0.65);
+}
+
+@keyframes bigWinCalloutAnim {
+  0% {
+    transform: scale(0.88) translateY(18px);
+    opacity: 0;
+    filter: blur(8px);
+  }
+  18% {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1.06) translateY(0);
+  }
+  36% {
+    opacity: 1;
+    transform: scale(1.08) translateY(0);
+  }
+  58% {
+    opacity: 1;
+    transform: scale(1.04) translateY(0);
+  }
+  100% {
+    transform: scale(1.12) translateY(-12px);
+    opacity: 0;
+    filter: blur(14px);
   }
 }
 

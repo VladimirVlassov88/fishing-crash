@@ -352,6 +352,8 @@
     flashSoftCyan: document.getElementById("flashSoftCyan"),
     flashBite: document.getElementById("flashBite"),
     biteCallout: document.getElementById("biteCallout"),
+    bigWinCallout: document.getElementById("bigWinCallout"),
+    bigWinCalloutText: document.getElementById("bigWinCalloutText"),
     biteSplash: document.getElementById("biteSplash"),
     resistanceHud: document.getElementById("resistanceHud"),
     biteSceneFlash: document.getElementById("biteSceneFlash"),
@@ -587,6 +589,32 @@
   /** Текущий выигрыш = ставка × множитель, без копеек */
   function currentWin() {
     return Math.floor(betLocked * currentMultiplier);
+  }
+
+  /** Длительность анимации соответствует CSS `bigWinCalloutAnim` (~1.5s, диапазон 1.2–1.8s) */
+  const BIG_WIN_CALLOUT_MS = 1520;
+
+  /** Надписи за любой успешный кэшаут (ручной или авто через `cashOut()`): ≥×10 / ≥×15 к ставке по фактическому `payout`. */
+  function showBigWinCalloutIfEligible(payout) {
+    var b = betLocked;
+    if (!b || b < 1) return;
+    var host = els.bigWinCallout;
+    var textEl = els.bigWinCalloutText;
+    if (!host || !textEl) return;
+    var label = "";
+    if (payout >= 15 * b) label = "БОЛЬШОЙ УЛОВ";
+    else if (payout >= 10 * b) label = "ХОРОШИЙ УЛОВ";
+    else return;
+    textEl.textContent = label;
+    host.classList.remove("big-win-callout--show");
+    void host.offsetWidth;
+    host.classList.add("big-win-callout--show");
+    host.setAttribute("aria-hidden", "false");
+    window.setTimeout(function () {
+      if (!els.bigWinCallout) return;
+      els.bigWinCallout.classList.remove("big-win-callout--show");
+      els.bigWinCallout.setAttribute("aria-hidden", "true");
+    }, BIG_WIN_CALLOUT_MS);
   }
 
   function formatMoney(n) {
@@ -1483,6 +1511,7 @@
       els.biteCallout.classList.remove("bite-callout--show", "bite-callout--burst");
       els.biteCallout.setAttribute("aria-hidden", "true");
     }
+    /* big-win-callout: не сбрасывать здесь — иначе enterIdle (ROUND_END_MS) раньше конца анимации (~1.5s) обрывает надпись и при ручном, и при авто-кэшауте */
     if (els.biteSceneFlash) {
       els.biteSceneFlash.classList.remove("bite-scene-flash--anim");
       els.biteSceneFlash.setAttribute("aria-hidden", "true");
@@ -1619,6 +1648,8 @@
 
     showRewardPopup("cashout", formatMoney(payout), currentFish ? currentFish.id : undefined);
 
+    showBigWinCalloutIfEligible(payout);
+
     refreshMoneyUI();
     syncStatusText();
     syncFishLine();
@@ -1651,6 +1682,11 @@
 
   function cast() {
     if (phase !== "idle") return;
+
+    if (els.bigWinCallout) {
+      els.bigWinCallout.classList.remove("big-win-callout--show");
+      els.bigWinCallout.setAttribute("aria-hidden", "true");
+    }
 
     clampBet();
     var useNightBonusFree = nightBonusCastsRemaining > 0;
@@ -1889,6 +1925,40 @@
   }
 
   window.addEventListener("resize", syncHistoryLayout);
+
+  /** Таймаут совпадает с transition opacity у `.start-screen` (400–700ms → 550ms) */
+  const START_SCREEN_HIDE_MS = 550;
+
+  function initStartScreen() {
+    var el = document.getElementById("startScreen");
+    if (!el) return;
+    function dismiss() {
+      if (el.classList.contains("is-dismissed")) return;
+      el.classList.add("is-dismissed");
+      window.setTimeout(function () {
+        el.hidden = true;
+        el.setAttribute("aria-hidden", "true");
+        el.removeEventListener("click", dismiss);
+        el.removeEventListener("touchend", onTouchEnd);
+        el.removeEventListener("keydown", onKey);
+      }, START_SCREEN_HIDE_MS);
+    }
+    function onTouchEnd(ev) {
+      ev.preventDefault();
+      dismiss();
+    }
+    function onKey(ev) {
+      if (ev.key === "Enter" || ev.key === " ") {
+        ev.preventDefault();
+        dismiss();
+      }
+    }
+    el.addEventListener("click", dismiss);
+    el.addEventListener("touchend", onTouchEnd, { passive: false });
+    el.addEventListener("keydown", onKey);
+  }
+
+  initStartScreen();
 
   preloadFishImages()
     .then(function () {

@@ -7,6 +7,17 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <!-- Полноэкранный старт (до первого тапа/клика) -->
+  <div
+    class="start-screen"
+    id="startScreen"
+    role="button"
+    tabindex="0"
+    aria-label="Начать игру"
+  >
+    <img class="start-screen__img" src="assets/ui/start_screen.png" alt="" decoding="async" />
+  </div>
+
   <!-- Фон ночной сцены (нижний слой) -->
   <div class="scene-back" aria-hidden="true">
     <div class="sky">
@@ -139,6 +150,10 @@
 
   <div class="bite-callout" id="biteCallout" aria-hidden="true">
     <span class="bite-callout__text">КЛЁВ!</span>
+  </div>
+
+  <div class="big-win-callout" id="bigWinCallout" aria-hidden="true">
+    <span class="big-win-callout__text" id="bigWinCalloutText"></span>
   </div>
 
   <div class="reward-popup-layer" id="rewardPopupLayer" aria-hidden="true"></div>
