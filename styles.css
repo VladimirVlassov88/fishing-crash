@@ -30,8 +30,10 @@
   --lake-entry-x: 50%;
   --lake-entry-bottom-pct: 46%;
   /* Клёв: синхрон длительностей splash / rings / stage */
-  --bite-fx-duration: 820ms;
-  --bite-flash-pulse-ms: 400ms;
+  --bite-fx-duration: 780ms;
+  --bite-flash-pulse-ms: 340ms;
+  --bite-impact-ring-ms: 900ms;
+  --bite-ripple-ring-ms: 920ms;
 }
 
 *,
@@ -125,7 +127,7 @@ body.bite-shake .app {
   }
 }
 
-/* SCENE FLASH: короткий cyan/blue импульс к зоне воды, без белого экрана */
+/* SCENE FLASH: лёгкий отблеск у точки входа — узкие градиенты (без «заливки» кадра) */
 .bite-scene-flash {
   position: fixed;
   inset: 0;
@@ -134,14 +136,14 @@ body.bite-shake .app {
   opacity: 0;
   visibility: hidden;
   background:
-    radial-gradient(ellipse 52% 48% at 50% 56%, rgba(85, 228, 255, 0.38) 0%, transparent 58%),
-    radial-gradient(ellipse 92% 72% at 50% 54%, rgba(24, 82, 140, 0.26) 0%, transparent 62%),
-    radial-gradient(circle at 50% 62%, rgba(10, 45, 72, 0.22) 0%, transparent 55%);
+    radial-gradient(ellipse 32% 26% at 50% 58%, rgba(72, 220, 245, 0.18) 0%, transparent 56%),
+    radial-gradient(ellipse 44% 34% at 50% 56%, rgba(20, 72, 118, 0.1) 0%, transparent 60%),
+    radial-gradient(circle at 50% 60%, rgba(8, 40, 68, 0.06) 0%, transparent 52%);
 }
 
 .bite-scene-flash.bite-scene-flash--anim {
   visibility: visible;
-  animation: biteSceneFlashAnim var(--bite-flash-pulse-ms, 400ms) cubic-bezier(0.22, 0.82, 0.28, 1) forwards;
+  animation: biteSceneFlashAnim var(--bite-flash-pulse-ms, 340ms) cubic-bezier(0.22, 0.82, 0.28, 1) forwards;
 }
 
 @keyframes biteSceneFlashAnim {
@@ -149,7 +151,7 @@ body.bite-shake .app {
     opacity: 0;
   }
   38% {
-    opacity: 0.42;
+    opacity: 0.15;
   }
   100% {
     opacity: 0;
@@ -715,13 +717,18 @@ body.is-snap .lake .moving-ripple-point {
 
 /* Bite/reeling: чуть заметнее ядро, без прожекторных ореолов */
 body.is-bite .water-ripple__core {
-  background: radial-gradient(
-    circle at 45% 42%,
-    rgba(208, 232, 246, 0.095) 0%,
-    rgba(168, 205, 228, 0.042) 40%,
-    transparent 72%
-  );
-  box-shadow: none;
+  background:
+    radial-gradient(
+      circle at 45% 40%,
+      rgba(236, 252, 255, 0.2) 0%,
+      rgba(190, 232, 250, 0.12) 28%,
+      rgba(140, 210, 235, 0.045) 52%,
+      transparent 76%
+    );
+  box-shadow:
+    0 0 18px rgba(120, 225, 248, 0.22),
+    0 0 32px rgba(56, 190, 230, 0.1),
+    inset 0 0 12px rgba(255, 255, 255, 0.06);
 }
 
 body.is-reeling .water-ripple__core {
@@ -741,7 +748,20 @@ body.is-reeling .water-ripple__ring {
 }
 
 body.is-bite .water-ripple__ring {
-  animation-duration: 3.2s;
+  border-color: rgba(185, 232, 248, 0.4);
+  border-width: 0.75px;
+  box-shadow:
+    0 0 12px rgba(160, 235, 255, 0.28),
+    0 0 22px rgba(70, 200, 235, 0.12);
+  animation: waterRippleBiteHit var(--bite-ripple-ring-ms, 920ms) cubic-bezier(0.16, 0.52, 0.22, 1) infinite;
+}
+
+body.is-bite .water-ripple__ring:nth-child(3) {
+  animation-delay: 0.12s;
+}
+
+body.is-bite .water-ripple__ring:nth-child(4) {
+  animation-delay: 0.26s;
 }
 
 body.is-reeling .water-ripple__ring {
@@ -761,6 +781,11 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
   body.is-reeling .lake .moving-ripple-point,
   body.is-bite .lake .moving-ripple-point {
     animation: none;
+  }
+
+  body.is-bite .water-ripple__ring {
+    animation: none;
+    opacity: 0.32;
   }
 }
 
@@ -820,14 +845,32 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
   }
 }
 
+/* Быстрые читаемые кольца при клёве — расширение и угасание в пределах точки */
+@keyframes waterRippleBiteHit {
+  0% {
+    transform: translate(-50%, -50%) scale(0.44);
+    opacity: 0.12;
+  }
+  14% {
+    opacity: 0.52;
+  }
+  38% {
+    opacity: 0.32;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2.08);
+    opacity: 0;
+  }
+}
+
 .bite-splash__stage {
   position: absolute;
   inset: 0;
-  transform-origin: 50% 50%;
+  transform-origin: 50% 55%;
   filter:
-    drop-shadow(0 0 34px rgba(72, 228, 255, 0.55))
-    drop-shadow(0 0 68px rgba(45, 175, 235, 0.35))
-    drop-shadow(0 0 110px rgba(30, 130, 210, 0.14));
+    drop-shadow(0 0 16px rgba(72, 228, 255, 0.48))
+    drop-shadow(0 0 32px rgba(50, 185, 235, 0.22))
+    drop-shadow(0 -8px 26px rgba(210, 248, 255, 0.16));
 }
 
 .bite-splash.bite-splash--anim {
@@ -846,10 +889,10 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
   border-radius: 50%;
   opacity: 0;
   background:
-    radial-gradient(circle at 50% 48%, rgba(210, 252, 255, 0.62) 0%, transparent 38%),
-    radial-gradient(ellipse 72% 58% at 50% 52%, rgba(56, 205, 245, 0.42) 0%, transparent 58%);
+    radial-gradient(circle at 50% 46%, rgba(230, 255, 255, 0.72) 0%, transparent 34%),
+    radial-gradient(ellipse 68% 56% at 50% 54%, rgba(72, 215, 248, 0.45) 0%, transparent 56%);
   mix-blend-mode: screen;
-  transform-origin: 50% 50%;
+  transform-origin: 50% 52%;
 }
 
 .bite-splash.bite-splash--anim .bite-splash__water-flash {
@@ -859,22 +902,22 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
 @keyframes biteSplashLocalFlash {
   0% {
     opacity: 0;
-    transform: scale(0.45);
-    filter: blur(14px);
+    transform: scale(0.4);
+    filter: blur(12px);
   }
-  42% {
+  36% {
     opacity: 1;
-    transform: scale(1.05);
-    filter: blur(10px);
+    transform: scale(0.98);
+    filter: blur(6px);
   }
   100% {
     opacity: 0;
-    transform: scale(1.42);
-    filter: blur(22px);
+    transform: scale(1.25);
+    filter: blur(16px);
   }
 }
 
-/* Дымка воды (под ударом) */
+/* Дымка удара — слабая, только «пыль» у поверхности */
 .bite-splash__mist {
   position: absolute;
   left: 50%;
@@ -884,10 +927,9 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background:
-    radial-gradient(ellipse 72% 62% at 50% 42%, rgba(235, 254, 255, 0.62) 0%, transparent 52%),
-    radial-gradient(ellipse 96% 84% at 50% 52%, rgba(100, 225, 248, 0.48) 0%, transparent 58%),
-    radial-gradient(ellipse 120% 90% at 50% 56%, rgba(40, 165, 215, 0.22) 0%, transparent 62%);
-  filter: blur(19px);
+    radial-gradient(ellipse 58% 50% at 50% 44%, rgba(225, 252, 255, 0.22) 0%, transparent 54%),
+    radial-gradient(ellipse 76% 64% at 50% 54%, rgba(90, 215, 245, 0.12) 0%, transparent 58%);
+  filter: blur(14px);
   opacity: 0;
   pointer-events: none;
   mix-blend-mode: screen;
@@ -913,12 +955,12 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
   opacity: 0;
   pointer-events: none;
   border-style: solid;
-  border-color: rgba(238, 252, 255, 0.88);
-  border-width: 1.35px;
+  border-color: rgba(232, 252, 255, 0.92);
+  border-width: 1.2px;
   box-shadow:
-    0 0 22px rgba(185, 248, 255, 0.62),
-    0 0 48px rgba(70, 205, 245, 0.42),
-    inset 0 0 14px rgba(255, 255, 255, 0.14);
+    0 0 18px rgba(170, 245, 255, 0.55),
+    0 0 36px rgba(65, 210, 245, 0.28),
+    inset 0 0 10px rgba(255, 255, 255, 0.12);
 }
 
 .bite-splash__impact-ring--1 {
@@ -954,15 +996,15 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
 }
 
 .bite-splash.bite-splash--anim .bite-splash__impact-ring--1 {
-  animation: biteWaterImpactRingHit var(--bite-fx-duration) cubic-bezier(0.08, 0.58, 0.22, 1) forwards;
+  animation: biteWaterImpactRingHit var(--bite-impact-ring-ms, 900ms) cubic-bezier(0.06, 0.62, 0.18, 1) forwards;
 }
 
 .bite-splash.bite-splash--anim .bite-splash__impact-ring--2 {
-  animation: biteWaterImpactRingHit var(--bite-fx-duration) cubic-bezier(0.08, 0.58, 0.22, 1) 0.052s forwards;
+  animation: biteWaterImpactRingHit var(--bite-impact-ring-ms, 900ms) cubic-bezier(0.06, 0.62, 0.18, 1) 0.05s forwards;
 }
 
 .bite-splash.bite-splash--anim .bite-splash__impact-ring--3 {
-  animation: biteWaterImpactRingHit var(--bite-fx-duration) cubic-bezier(0.08, 0.58, 0.22, 1) 0.104s forwards;
+  animation: biteWaterImpactRingHit var(--bite-impact-ring-ms, 900ms) cubic-bezier(0.06, 0.62, 0.18, 1) 0.1s forwards;
 }
 
 .bite-splash.bite-splash--anim .bite-splash__impact-ring--4 {
@@ -983,10 +1025,10 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
   opacity: 0;
   border-radius: 50% 50% 48% 52% / 58% 58% 42% 42%;
   background:
-    radial-gradient(ellipse 62% 82% at 50% 88%, rgba(252, 255, 255, 0.72) 0%, transparent 42%),
-    radial-gradient(ellipse 58% 72% at 50% 72%, rgba(160, 238, 255, 0.55) 0%, transparent 55%),
-    radial-gradient(ellipse 70% 56% at 50% 48%, rgba(60, 190, 235, 0.35) 0%, transparent 62%);
-  filter: blur(10px);
+    radial-gradient(ellipse 62% 82% at 50% 88%, rgba(252, 255, 255, 0.78) 0%, transparent 40%),
+    radial-gradient(ellipse 58% 72% at 50% 72%, rgba(150, 240, 255, 0.58) 0%, transparent 52%),
+    radial-gradient(ellipse 70% 56% at 50% 48%, rgba(55, 195, 238, 0.38) 0%, transparent 60%);
+  filter: blur(9px);
   mix-blend-mode: screen;
   transform-origin: 50% 85%;
 }
@@ -998,23 +1040,23 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
 @keyframes biteSplashCrown {
   0% {
     opacity: 0;
-    transform: translate(-50%, 18%) scale(0.35, 0.28);
-    filter: blur(16px);
+    transform: translate(-50%, 22%) scale(0.38, 0.3);
+    filter: blur(14px);
   }
-  22% {
+  18% {
     opacity: 1;
-    transform: translate(-50%, -52%) scale(1.08, 1.28);
-    filter: blur(8px);
+    transform: translate(-50%, -48%) scale(1.06, 1.22);
+    filter: blur(7px);
   }
-  48% {
-    opacity: 0.72;
-    transform: translate(-50%, -68%) scale(1.12, 1.42);
-    filter: blur(12px);
+  40% {
+    opacity: 0.82;
+    transform: translate(-50%, -62%) scale(1.1, 1.36);
+    filter: blur(9px);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -118%) scale(1.18, 1.62);
-    filter: blur(24px);
+    transform: translate(-50%, -108%) scale(1.14, 1.55);
+    filter: blur(20px);
   }
 }
 
@@ -1028,11 +1070,12 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background:
-    radial-gradient(circle at 50% 52%, rgba(245, 254, 255, 0.95) 0%, transparent 22%),
-    radial-gradient(circle at 50% 46%, rgba(200, 248, 255, 0.78) 0%, rgba(95, 218, 248, 0.48) 42%, transparent 66%);
-  filter: blur(1.4px);
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.98) 0%, transparent 20%),
+    radial-gradient(circle at 50% 46%, rgba(210, 250, 255, 0.85) 0%, rgba(100, 225, 248, 0.52) 38%, transparent 64%);
+  filter: blur(1px);
   opacity: 0;
   pointer-events: none;
+  box-shadow: 0 0 24px rgba(185, 248, 255, 0.4);
 }
 
 .bite-splash.bite-splash--anim .bite-splash__burst {
@@ -1063,8 +1106,8 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
     rgba(55, 165, 215, 0.12) 100%
   );
   box-shadow:
-    0 0 12px rgba(220, 252, 255, 0.95),
-    0 0 28px rgba(80, 205, 245, 0.62);
+    0 0 14px rgba(220, 252, 255, 0.9),
+    0 0 26px rgba(80, 210, 245, 0.42);
   opacity: 0;
   pointer-events: none;
 }
@@ -1077,78 +1120,81 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
 }
 
 .bite-splash.bite-splash--anim .bite-splash__droplets .bite-splash__drop {
-  animation: biteSplashDrop 620ms cubic-bezier(0.08, 0.82, 0.28, 1) forwards;
+  animation: biteSplashDrop min(680ms, var(--bite-drop-dur, 760ms)) cubic-bezier(0.06, 0.82, 0.22, 1) forwards;
   animation-delay: var(--bite-d, 0s);
 }
 
 @keyframes biteSplashStage {
   0% {
     opacity: 0;
-    transform: scale(0.38);
+    transform: scale(0.32);
   }
-  16% {
+  14% {
     opacity: 1;
-    transform: scale(1.06);
+    transform: scale(1.08);
   }
-  42% {
-    opacity: 0.94;
+  36% {
+    opacity: 0.96;
     transform: scale(1.02);
   }
   100% {
     opacity: 0;
-    transform: scale(1.32);
+    transform: scale(1.22);
   }
 }
 
 @keyframes biteSplashMist {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.48);
+    transform: translate(-50%, -50%) scale(0.56);
   }
-  18% {
-    opacity: 1;
-    transform: translate(-50%, -52%) scale(1.12);
+  22% {
+    opacity: 0.35;
+    transform: translate(-50%, -51%) scale(0.98);
   }
-  46% {
-    opacity: 0.82;
-    transform: translate(-50%, -54%) scale(1.22);
+  48% {
+    opacity: 0.2;
+    transform: translate(-50%, -52%) scale(1.04);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -56%) scale(1.58);
+    transform: translate(-50%, -53%) scale(1.12);
   }
 }
 
 @keyframes biteWaterImpactRingHit {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) rotate(var(--ring-rot, 0deg)) scale(0.18);
+    transform: translate(-50%, -50%) rotate(var(--ring-rot, 0deg)) scale(0.16);
   }
-  12% {
+  10% {
     opacity: 1;
+  }
+  72% {
+    opacity: 0.22;
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) rotate(var(--ring-rot, 0deg)) scale(3.35);
+    transform: translate(-50%, -50%) rotate(var(--ring-rot, 0deg)) scale(2.92);
   }
 }
 
 @keyframes biteSplashBurstCore {
   0% {
     opacity: 0;
-    transform: translate(-50%, 38%) scale(0.12, 0.42);
+    transform: translate(-50%, 34%) scale(0.16, 0.38);
   }
-  16% {
+  12% {
     opacity: 1;
-    transform: translate(-50%, -46%) scale(1.42, 1.62);
+    transform: translate(-50%, -42%) scale(1.38, 1.52);
   }
-  36% {
-    opacity: 0.88;
-    transform: translate(-50%, -22%) scale(1.08, 1.18);
+  32% {
+    opacity: 0.92;
+    transform: translate(-50%, -26%) scale(1.02, 1.08);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -58%) scale(1.72, 1.95);
+    transform: translate(-50%, -54%) scale(1.68, 1.88);
   }
 }
 
@@ -1620,9 +1666,9 @@ body.is-reeling .fish-silhouette.visible .fish-underwater-shape {
 
 .flash-bite {
   background:
-    radial-gradient(circle at 50% 36%, rgba(255, 248, 190, 0.52) 0%, transparent 42%),
-    radial-gradient(ellipse 85% 70% at 50% 52%, rgba(56, 214, 255, 0.28) 0%, transparent 58%),
-    radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.06) 0%, transparent 55%);
+    radial-gradient(circle at 50% 40%, rgba(255, 248, 210, 0.18) 0%, transparent 38%),
+    radial-gradient(ellipse 52% 42% at 50% 54%, rgba(56, 200, 235, 0.12) 0%, transparent 54%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 0%, transparent 48%);
 }
 
 /* «КЛЁВ!» — верхняя треть игровой зоны, короткий cinematic burst */
@@ -1643,7 +1689,7 @@ body.is-reeling .fish-silhouette.visible .fish-underwater-shape {
 }
 
 .bite-callout.bite-callout--burst .bite-callout__text {
-  animation: biteCalloutBurst 920ms cubic-bezier(0.28, 1.05, 0.36, 1) forwards;
+  animation: biteCalloutBurst 840ms cubic-bezier(0.28, 1.05, 0.36, 1) forwards;
 }
 
 .bite-callout__text {
@@ -1651,16 +1697,15 @@ body.is-reeling .fish-silhouette.visible .fish-underwater-shape {
   font-weight: 900;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #f4fcff;
+  color: #f2fbff;
   max-width: min(92vw, 440px);
   text-align: center;
   line-height: 1.05;
   text-shadow:
-    0 0 14px rgba(255, 255, 255, 0.98),
-    0 0 28px rgba(72, 248, 255, 1),
-    0 0 52px rgba(50, 198, 255, 0.72),
-    0 0 92px rgba(35, 155, 220, 0.42),
-    0 8px 32px rgba(0, 4, 18, 0.62);
+    0 0 16px rgba(200, 248, 255, 0.72),
+    0 0 32px rgba(72, 218, 255, 0.55),
+    0 0 56px rgba(45, 175, 220, 0.24),
+    0 6px 26px rgba(0, 4, 18, 0.52);
 }
 
 @keyframes biteCalloutBurst {
@@ -1769,30 +1814,33 @@ body.event-bite .splash-ring--mid {
 
 @keyframes splashBiteBurst {
   0% {
-    transform: translate(-50%, -50%) scale(0.52);
-    opacity: 0.35;
+    transform: translate(-50%, -50%) scale(0.48);
+    opacity: 0.42;
+    filter: brightness(1);
   }
-  38% {
-    transform: translate(-50%, -50%) scale(1.38);
+  35% {
+    transform: translate(-50%, -50%) scale(1.48);
     opacity: 1;
+    filter: brightness(1.12) drop-shadow(0 0 16px rgba(160, 240, 255, 0.45));
   }
   100% {
-    transform: translate(-50%, -50%) scale(1.08);
-    opacity: 0.88;
+    transform: translate(-50%, -50%) scale(1.12);
+    opacity: 0.92;
+    filter: brightness(1.02) drop-shadow(0 0 10px rgba(120, 220, 245, 0.22));
   }
 }
 
 @keyframes splashRingBite {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.62);
+    transform: translate(-50%, -50%) scale(0.58);
   }
-  28% {
+  22% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(1.42);
+    transform: translate(-50%, -50%) scale(1.58);
   }
 }
 
