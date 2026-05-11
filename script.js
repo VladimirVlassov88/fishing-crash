@@ -282,10 +282,10 @@
   /** Пустой заброс и малёк: ровно 1.2 с перед idle */
   const MINOR_ROUND_MS = 1200;
   /** Длительности одноразового FX при fish (только визуал). */
-  const BITE_SPLASH_ANIM_MS = 1040;
-  const BITE_CALLOUT_BURST_MS = 1020;
-  const BITE_SCREEN_SHAKE_MS = 320;
-  const BITE_SCENE_FLASH_MS = 260;
+  const BITE_SPLASH_ANIM_MS = 920;
+  const BITE_CALLOUT_BURST_MS = 920;
+  const BITE_SCREEN_SHAKE_MS = 215;
+  const BITE_SCENE_FLASH_MS = 420;
   /** Максимальный множитель обрыва в прототипе */
   const CRASH_MULT_CAP = 20;
 
@@ -1112,8 +1112,47 @@
     }
   }
 
-  /** История: последние 8, новые сверху. fishId — id из fishTypes или "malek". */
-  function pushHistory(html, className, fishId) {
+  function trimHistoryRealRowsToCap() {
+    if (!els.historyList) return;
+    while (true) {
+      var reals = els.historyList.querySelectorAll(".hist-item:not(.hist-item--placeholder)");
+      if (reals.length <= HISTORY_CAP) break;
+      reals[reals.length - 1].remove();
+    }
+  }
+
+  /** Дополняет список до HISTORY_CAP визуальных слотов. */
+  function syncHistoryPlaceholders() {
+    if (!els.historyList) return;
+    els.historyList.querySelectorAll(".hist-item--placeholder").forEach(function (n) {
+      n.remove();
+    });
+    var count = els.historyList.querySelectorAll(".hist-item:not(.hist-item--placeholder)").length;
+    var need = Math.max(0, HISTORY_CAP - count);
+    for (var pi = 0; pi < need; pi++) {
+      var ph = document.createElement("div");
+      ph.className = "hist-item hist-item--placeholder";
+      ph.setAttribute("aria-hidden", "true");
+      var mkG = document.createElement("span");
+      mkG.className = "hist-item__marker hist-item__marker--ghost";
+      ph.appendChild(mkG);
+      var mainPh = document.createElement("span");
+      mainPh.className = "hist-item__main";
+      var linePh = document.createElement("span");
+      linePh.className = "hist-item__placeholder-line";
+      mainPh.appendChild(linePh);
+      ph.appendChild(mainPh);
+      els.historyList.appendChild(ph);
+    }
+  }
+
+  /** История: последние 8 записей, новые сверху. parts: { label, mult?, amount? }; fishId — из fishTypes или "malek". */
+  function pushHistory(parts, className, fishId) {
+    if (!els.historyList) return;
+    els.historyList.querySelectorAll(".hist-item--placeholder").forEach(function (n) {
+      n.remove();
+    });
+
     const row = document.createElement("div");
     row.className = "hist-item " + className;
     var srcHist = fishId && fishIconSrc(fishId);
@@ -1161,14 +1200,30 @@
       mkSnap.setAttribute("title", "Обрыв");
       row.appendChild(mkSnap);
     }
+
     var mainSpan = document.createElement("span");
     mainSpan.className = "hist-item__main";
-    mainSpan.innerHTML = html;
-    row.appendChild(mainSpan);
-    els.historyList.prepend(row);
-    while (els.historyList.children.length > HISTORY_CAP) {
-      els.historyList.removeChild(els.historyList.lastChild);
+    var lbEl = document.createElement("span");
+    lbEl.className = "hist-item__label";
+    lbEl.textContent = parts.label || "";
+    mainSpan.appendChild(lbEl);
+    if (parts.mult) {
+      var multEl = document.createElement("span");
+      multEl.className = "hist-item__mult";
+      multEl.textContent = parts.mult;
+      mainSpan.appendChild(multEl);
     }
+    if (parts.amount) {
+      var amtEl = document.createElement("span");
+      amtEl.className = "hist-item__amount";
+      amtEl.textContent = parts.amount;
+      mainSpan.appendChild(amtEl);
+    }
+    row.appendChild(mainSpan);
+
+    els.historyList.prepend(row);
+    trimHistoryRealRowsToCap();
+    syncHistoryPlaceholders();
   }
 
   /** Выигрыш: зелёный до ×2.5, иначе «золотой» стиль */
@@ -1383,7 +1438,7 @@
     }
 
     const snapMult = currentMultiplier;
-    pushHistory("<span>Обрыв x" + snapMult.toFixed(2) + "</span>", "hist-snap");
+    pushHistory({ label: "Обрыв", mult: "×" + snapMult.toFixed(2) }, "hist-snap");
 
     syncStatusText();
     syncFishLine();
@@ -1422,15 +1477,13 @@
     triggerVibration([80, 50, 120]);
     updateFishingLine(0, "cashedOut");
 
-    const name = currentFish ? currentFish.name : "";
+    const name = currentFish && currentFish.name ? currentFish.name : "Улов";
     pushHistory(
-      "<span>" +
-        name +
-        " x" +
-        mult.toFixed(2) +
-        " +" +
-        formatMoney(payout) +
-        " ₸</span>",
+      {
+        label: name,
+        mult: "×" + mult.toFixed(2),
+        amount: "+" + formatMoney(payout) + " ₸",
+      },
       histClassWin(mult),
       currentFish ? currentFish.id : undefined
     );
@@ -1504,7 +1557,7 @@
         phase = "noCatch";
         currentMultiplier = 1;
         playReelWindTicks();
-        pushHistory("<span>Пусто −" + formatMoney(betLocked) + " ₸</span>", "hist-empty");
+        pushHistory({ label: "Пусто", amount: "−" + formatMoney(betLocked) + " ₸" }, "hist-empty");
         syncButtons();
         syncStatusText();
         syncFishLine();
@@ -1523,11 +1576,11 @@
         balance += smallWin;
         if (els.flashSoftCyan) flash(els.flashSoftCyan, 260);
         pushHistory(
-          "<span>Малёк x" +
-            currentMultiplier.toFixed(2) +
-            " +" +
-            formatMoney(smallWin) +
-            " ₸</span>",
+          {
+            label: "Малёк",
+            mult: "×" + currentMultiplier.toFixed(2),
+            amount: "+" + formatMoney(smallWin) + " ₸",
+          },
           "hist-small",
           "malek"
         );
@@ -1667,12 +1720,14 @@
     .finally(function () {
       initFishPanelIcons();
       refreshHistoryFishIcons();
+      syncHistoryPlaceholders();
       renderRoundVisuals();
     });
 
   clampBet();
   refreshMoneyUI();
   syncHistoryLayout();
+  syncHistoryPlaceholders();
   syncButtons();
   syncStatusText();
   syncAutoCashoutUI();

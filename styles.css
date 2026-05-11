@@ -26,6 +26,12 @@
   /* Награда поверх UI приложения, ниже полноэкранных flash */
   --z-reward-popup: 46;
   --z-flash: 50;
+  /* Единая точка входа в воду (ripple / splash / декор-кольца) */
+  --lake-entry-x: 50%;
+  --lake-entry-bottom-pct: 46%;
+  /* Клёв: синхрон длительностей splash / rings / stage */
+  --bite-fx-duration: 820ms;
+  --bite-flash-pulse-ms: 400ms;
 }
 
 *,
@@ -72,9 +78,13 @@ img {
   background-repeat: no-repeat;
 }
 
-/* Короткая тряска фона только при настоящем клёве (JS: body.bite-shake) — слой SCREEN SHAKE */
+/* Короткая тряска при клёве — фон + UI слегка вместе (JS: body.bite-shake) */
 body.bite-shake .scene-back {
-  animation: biteSceneShake 320ms ease-out;
+  animation: biteSceneShake 215ms cubic-bezier(0.33, 0.02, 0.28, 1) forwards;
+}
+
+body.bite-shake .app {
+  animation: biteUiShake 215ms cubic-bezier(0.33, 0.02, 0.28, 1) forwards;
 }
 
 @keyframes biteSceneShake {
@@ -82,24 +92,40 @@ body.bite-shake .scene-back {
   100% {
     transform: translate3d(0, 0, 0);
   }
-  15% {
-    transform: translate3d(-5px, 4px, 0);
+  18% {
+    transform: translate3d(-7px, 5px, 0);
   }
-  30% {
-    transform: translate3d(6px, -3px, 0);
+  38% {
+    transform: translate3d(8px, -5px, 0);
   }
-  48% {
-    transform: translate3d(-4px, -5px, 0);
+  58% {
+    transform: translate3d(-5px, -6px, 0);
   }
-  65% {
-    transform: translate3d(5px, 3px, 0);
-  }
-  82% {
-    transform: translate3d(-3px, 2px, 0);
+  78% {
+    transform: translate3d(5px, 4px, 0);
   }
 }
 
-/* SCENE FLASH: голубовато-белая вспышка под HUD (z-index ниже .app) */
+@keyframes biteUiShake {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  18% {
+    transform: translate3d(3px, -2px, 0);
+  }
+  38% {
+    transform: translate3d(-3px, 2px, 0);
+  }
+  58% {
+    transform: translate3d(2px, 2px, 0);
+  }
+  78% {
+    transform: translate3d(-2px, -1px, 0);
+  }
+}
+
+/* SCENE FLASH: короткий cyan/blue импульс к зоне воды, без белого экрана */
 .bite-scene-flash {
   position: fixed;
   inset: 0;
@@ -108,21 +134,22 @@ body.bite-shake .scene-back {
   opacity: 0;
   visibility: hidden;
   background:
-    radial-gradient(ellipse 74% 64% at 50% 38%, rgba(240, 252, 255, 0.34) 0%, transparent 54%),
-    radial-gradient(ellipse 92% 82% at 50% 52%, rgba(170, 228, 248, 0.22) 0%, transparent 60%);
+    radial-gradient(ellipse 52% 48% at 50% 56%, rgba(85, 228, 255, 0.38) 0%, transparent 58%),
+    radial-gradient(ellipse 92% 72% at 50% 54%, rgba(24, 82, 140, 0.26) 0%, transparent 62%),
+    radial-gradient(circle at 50% 62%, rgba(10, 45, 72, 0.22) 0%, transparent 55%);
 }
 
 .bite-scene-flash.bite-scene-flash--anim {
   visibility: visible;
-  animation: biteSceneFlashAnim 240ms ease-out forwards;
+  animation: biteSceneFlashAnim var(--bite-flash-pulse-ms, 400ms) cubic-bezier(0.22, 0.82, 0.28, 1) forwards;
 }
 
 @keyframes biteSceneFlashAnim {
   0% {
     opacity: 0;
   }
-  42% {
-    opacity: 0.3;
+  38% {
+    opacity: 0.42;
   }
   100% {
     opacity: 0;
@@ -544,15 +571,48 @@ body.is-snap .line-fp__path {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
 }
 
-/* Точка на воде: без wake/trail и без световых пятен на поверхности */
-.lake .water-surface-struggle {
+/* Якорь поверхности: --lake-entry-* ; один scaleY на .water-struggle-motion; bite без второго scaleY */
+.lake .surface-impact-anchor {
   position: absolute;
-  left: 50%;
-  bottom: 46%;
-  width: clamp(200px, 54vw, 330px);
-  height: clamp(92px, 21vw, 155px);
+  left: var(--lake-entry-x);
+  bottom: var(--lake-entry-bottom-pct);
+  --surface-impact-w: clamp(200px, 54vw, 330px);
+  --surface-impact-h: clamp(92px, 21vw, 155px);
+  width: var(--surface-impact-w);
+  height: var(--surface-impact-h);
   transform: translateX(-50%);
   z-index: 3;
+  pointer-events: none;
+}
+
+.lake .surface-impact-anchor .water-surface-struggle {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Внутри той же точки, что и ripple — наследует surfacePointDrift* */
+.lake .moving-ripple-point > .bite-splash {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--surface-impact-w);
+  height: var(--surface-impact-h);
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+/* Один scaleY только у предка .water-struggle-motion — здесь не дублировать, иначе splash «уплывает» от ripple */
+.lake .bite-splash__motion {
+  position: absolute;
+  inset: 0;
+  transform: none;
+  transform-origin: center center;
   pointer-events: none;
 }
 
@@ -598,7 +658,7 @@ body.is-reeling #fishSilhouette .fish-underwater-motion {
   height: clamp(68px, 20vw, 105px);
   transform: translate(-50%, -50%);
   transform-origin: center center;
-  z-index: 2;
+  z-index: 4;
   pointer-events: none;
 }
 
@@ -760,34 +820,14 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
   }
 }
 
-/* Многослойный bite FX при fish (без растров): см. .bite-splash__water-impact, __droplets, bite-scene-flash */
-.lake .bite-splash {
-  position: absolute;
-  left: 50%;
-  bottom: 46%;
-  width: clamp(172px, 49vw, 236px);
-  height: clamp(98px, 28vw, 138px);
-  transform: translateX(-50%) scaleY(0.74);
-  transform-origin: center 62%;
-  z-index: 14;
-  pointer-events: none;
-  visibility: hidden;
-}
-
-@media (min-width: 901px) {
-  .lake .bite-splash {
-    width: clamp(278px, 29vw, 378px);
-    height: clamp(138px, 15vw, 188px);
-  }
-}
-
 .bite-splash__stage {
   position: absolute;
   inset: 0;
-  transform-origin: 50% 58%;
+  transform-origin: 50% 50%;
   filter:
-    drop-shadow(0 0 26px rgba(95, 210, 240, 0.38))
-    drop-shadow(0 0 52px rgba(60, 175, 220, 0.18));
+    drop-shadow(0 0 34px rgba(72, 228, 255, 0.55))
+    drop-shadow(0 0 68px rgba(45, 175, 235, 0.35))
+    drop-shadow(0 0 110px rgba(30, 130, 210, 0.14));
 }
 
 .bite-splash.bite-splash--anim {
@@ -795,32 +835,69 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
 }
 
 .bite-splash.bite-splash--anim .bite-splash__stage {
-  animation: biteSplashStage 1040ms cubic-bezier(0.18, 0.68, 0.16, 1) forwards;
+  animation: biteSplashStage var(--bite-fx-duration) cubic-bezier(0.15, 0.85, 0.22, 1) forwards;
+}
+
+/* Локальная вспышка воды в точке splash (центр = ripple) */
+.bite-splash__water-flash {
+  position: absolute;
+  inset: -12%;
+  pointer-events: none;
+  border-radius: 50%;
+  opacity: 0;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(210, 252, 255, 0.62) 0%, transparent 38%),
+    radial-gradient(ellipse 72% 58% at 50% 52%, rgba(56, 205, 245, 0.42) 0%, transparent 58%);
+  mix-blend-mode: screen;
+  transform-origin: 50% 50%;
+}
+
+.bite-splash.bite-splash--anim .bite-splash__water-flash {
+  animation: biteSplashLocalFlash var(--bite-flash-pulse-ms) cubic-bezier(0.18, 0.92, 0.32, 1) forwards;
+}
+
+@keyframes biteSplashLocalFlash {
+  0% {
+    opacity: 0;
+    transform: scale(0.45);
+    filter: blur(14px);
+  }
+  42% {
+    opacity: 1;
+    transform: scale(1.05);
+    filter: blur(10px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.42);
+    filter: blur(22px);
+  }
 }
 
 /* Дымка воды (под ударом) */
 .bite-splash__mist {
   position: absolute;
   left: 50%;
-  top: 58%;
-  width: 106%;
-  height: 92%;
+  top: 50%;
+  width: 112%;
+  height: 96%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background:
-    radial-gradient(ellipse 78% 68% at 40% 44%, rgba(210, 250, 255, 0.55) 0%, transparent 54%),
-    radial-gradient(ellipse 94% 82% at 58% 56%, rgba(130, 218, 248, 0.38) 0%, transparent 60%);
-  filter: blur(17px);
+    radial-gradient(ellipse 72% 62% at 50% 42%, rgba(235, 254, 255, 0.62) 0%, transparent 52%),
+    radial-gradient(ellipse 96% 84% at 50% 52%, rgba(100, 225, 248, 0.48) 0%, transparent 58%),
+    radial-gradient(ellipse 120% 90% at 50% 56%, rgba(40, 165, 215, 0.22) 0%, transparent 62%);
+  filter: blur(19px);
   opacity: 0;
   pointer-events: none;
   mix-blend-mode: screen;
 }
 
 .bite-splash.bite-splash--anim .bite-splash__mist {
-  animation: biteSplashMist 1040ms cubic-bezier(0.2, 0.58, 0.18, 1) forwards;
+  animation: biteSplashMist var(--bite-fx-duration) cubic-bezier(0.14, 0.72, 0.24, 1) forwards;
 }
 
-/* WATER IMPACT: 4 эллиптических кольца, слегка «водные», не радар */
+/* WATER IMPACT: эллиптические кольца — при клёве анимируются 3 штуки */
 .bite-splash__water-impact {
   position: absolute;
   inset: 0;
@@ -830,18 +907,18 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
 .bite-splash__impact-ring {
   position: absolute;
   left: 50%;
-  top: 58%;
+  top: 50%;
   box-sizing: border-box;
   transform: translate(-50%, -50%) scale(0.26);
   opacity: 0;
   pointer-events: none;
   border-style: solid;
-  border-color: rgba(230, 252, 255, 0.78);
-  border-width: 1.2px;
+  border-color: rgba(238, 252, 255, 0.88);
+  border-width: 1.35px;
   box-shadow:
-    0 0 16px rgba(170, 238, 255, 0.55),
-    0 0 38px rgba(90, 200, 235, 0.35),
-    inset 0 0 12px rgba(255, 255, 255, 0.12);
+    0 0 22px rgba(185, 248, 255, 0.62),
+    0 0 48px rgba(70, 205, 245, 0.42),
+    inset 0 0 14px rgba(255, 255, 255, 0.14);
 }
 
 .bite-splash__impact-ring--1 {
@@ -849,7 +926,7 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
   width: 54%;
   height: 34%;
   border-radius: 54% 46% 51% 49% / 42% 56% 44% 58%;
-  transform: translate(-50%, -50%) rotate(-2.5deg) scale(0.26);
+  transform: translate(-50%, -50%) rotate(-2.5deg) scale(0.18);
 }
 
 .bite-splash__impact-ring--2 {
@@ -857,7 +934,7 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
   width: 58%;
   height: 38%;
   border-radius: 47% 53% 48% 52% / 54% 46% 52% 48%;
-  transform: translate(-50%, -50%) rotate(1.8deg) scale(0.26);
+  transform: translate(-50%, -50%) rotate(1.8deg) scale(0.18);
 }
 
 .bite-splash__impact-ring--3 {
@@ -865,7 +942,7 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
   width: 50%;
   height: 32%;
   border-radius: 52% 48% 54% 46% / 48% 52% 46% 54%;
-  transform: translate(-50%, -50%) rotate(-1.2deg) scale(0.26);
+  transform: translate(-50%, -50%) rotate(-1.2deg) scale(0.18);
 }
 
 .bite-splash__impact-ring--4 {
@@ -873,44 +950,93 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
   width: 62%;
   height: 41%;
   border-radius: 49% 51% 47% 53% / 44% 56% 50% 50%;
-  transform: translate(-50%, -50%) rotate(2.2deg) scale(0.26);
+  transform: translate(-50%, -50%) rotate(2.2deg) scale(0.18);
 }
 
 .bite-splash.bite-splash--anim .bite-splash__impact-ring--1 {
-  animation: biteWaterImpactRing 1040ms cubic-bezier(0.16, 0.72, 0.2, 1) forwards;
+  animation: biteWaterImpactRingHit var(--bite-fx-duration) cubic-bezier(0.08, 0.58, 0.22, 1) forwards;
 }
 
 .bite-splash.bite-splash--anim .bite-splash__impact-ring--2 {
-  animation: biteWaterImpactRing 1040ms cubic-bezier(0.16, 0.72, 0.2, 1) 0.065s forwards;
+  animation: biteWaterImpactRingHit var(--bite-fx-duration) cubic-bezier(0.08, 0.58, 0.22, 1) 0.052s forwards;
 }
 
 .bite-splash.bite-splash--anim .bite-splash__impact-ring--3 {
-  animation: biteWaterImpactRing 1040ms cubic-bezier(0.16, 0.72, 0.2, 1) 0.13s forwards;
+  animation: biteWaterImpactRingHit var(--bite-fx-duration) cubic-bezier(0.08, 0.58, 0.22, 1) 0.104s forwards;
 }
 
 .bite-splash.bite-splash--anim .bite-splash__impact-ring--4 {
-  animation: biteWaterImpactRing 1040ms cubic-bezier(0.16, 0.72, 0.2, 1) 0.195s forwards;
+  opacity: 0 !important;
+  visibility: hidden;
+  animation: none !important;
+}
+
+/* Вертикальный «столб» воды — короткий удар вверх */
+.bite-splash__crown {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 52%;
+  height: 78%;
+  transform: translate(-50%, -28%);
+  pointer-events: none;
+  opacity: 0;
+  border-radius: 50% 50% 48% 52% / 58% 58% 42% 42%;
+  background:
+    radial-gradient(ellipse 62% 82% at 50% 88%, rgba(252, 255, 255, 0.72) 0%, transparent 42%),
+    radial-gradient(ellipse 58% 72% at 50% 72%, rgba(160, 238, 255, 0.55) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 56% at 50% 48%, rgba(60, 190, 235, 0.35) 0%, transparent 62%);
+  filter: blur(10px);
+  mix-blend-mode: screen;
+  transform-origin: 50% 85%;
+}
+
+.bite-splash.bite-splash--anim .bite-splash__crown {
+  animation: biteSplashCrown var(--bite-fx-duration) cubic-bezier(0.12, 0.78, 0.28, 1) forwards;
+}
+
+@keyframes biteSplashCrown {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 18%) scale(0.35, 0.28);
+    filter: blur(16px);
+  }
+  22% {
+    opacity: 1;
+    transform: translate(-50%, -52%) scale(1.08, 1.28);
+    filter: blur(8px);
+  }
+  48% {
+    opacity: 0.72;
+    transform: translate(-50%, -68%) scale(1.12, 1.42);
+    filter: blur(12px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -118%) scale(1.18, 1.62);
+    filter: blur(24px);
+  }
 }
 
 /* Центральный короткий burst */
 .bite-splash__burst {
   position: absolute;
   left: 50%;
-  top: 58%;
-  width: 38%;
-  height: 30%;
+  top: 50%;
+  width: 42%;
+  height: 34%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background:
-    radial-gradient(circle at 40% 36%, rgba(255, 255, 255, 1) 0%, transparent 26%),
-    radial-gradient(circle at 50% 54%, rgba(220, 252, 255, 0.85) 0%, rgba(110, 215, 245, 0.42) 45%, transparent 64%);
-  filter: blur(1.2px);
+    radial-gradient(circle at 50% 52%, rgba(245, 254, 255, 0.95) 0%, transparent 22%),
+    radial-gradient(circle at 50% 46%, rgba(200, 248, 255, 0.78) 0%, rgba(95, 218, 248, 0.48) 42%, transparent 66%);
+  filter: blur(1.4px);
   opacity: 0;
   pointer-events: none;
 }
 
 .bite-splash.bite-splash--anim .bite-splash__burst {
-  animation: biteSplashBurstCore 1040ms cubic-bezier(0.14, 0.92, 0.26, 1) forwards;
+  animation: biteSplashBurstCore var(--bite-fx-duration) cubic-bezier(0.1, 0.95, 0.28, 1) forwards;
 }
 
 /* SPLASH DROPLETS */
@@ -923,124 +1049,134 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
 .bite-splash__drop {
   position: absolute;
   left: 50%;
-  top: 58%;
-  width: 4px;
-  height: 12px;
+  top: 50%;
+  width: 4.5px;
+  height: 13px;
   margin: 0;
   border-radius: 50%;
   transform-origin: 50% 100%;
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(210, 248, 255, 0.95) 28%,
-    rgba(140, 215, 240, 0.55) 65%,
-    rgba(80, 175, 215, 0.08) 100%
+    rgba(248, 255, 255, 1) 0%,
+    rgba(195, 242, 255, 0.95) 26%,
+    rgba(120, 218, 248, 0.62) 58%,
+    rgba(55, 165, 215, 0.12) 100%
   );
   box-shadow:
-    0 0 10px rgba(230, 252, 255, 0.9),
-    0 0 22px rgba(100, 205, 240, 0.55);
+    0 0 12px rgba(220, 252, 255, 0.95),
+    0 0 28px rgba(80, 205, 245, 0.62);
   opacity: 0;
   pointer-events: none;
 }
 
 .bite-splash__drop--shard {
-  width: 2.6px;
-  height: 17px;
+  width: 2.8px;
+  height: 18px;
   border-radius: 42%;
   filter: blur(0.15px);
 }
 
 .bite-splash.bite-splash--anim .bite-splash__droplets .bite-splash__drop {
-  animation: biteSplashDrop var(--bite-drop-dur, 760ms) cubic-bezier(0.12, 0.78, 0.32, 1) forwards;
+  animation: biteSplashDrop 620ms cubic-bezier(0.08, 0.82, 0.28, 1) forwards;
   animation-delay: var(--bite-d, 0s);
 }
 
 @keyframes biteSplashStage {
   0% {
     opacity: 0;
-    transform: scale(0.52);
+    transform: scale(0.38);
   }
-  22% {
+  16% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1.06);
   }
-  55% {
-    opacity: 0.82;
-    transform: scale(1.08);
+  42% {
+    opacity: 0.94;
+    transform: scale(1.02);
   }
   100% {
     opacity: 0;
-    transform: scale(1.42);
+    transform: scale(1.32);
   }
 }
 
 @keyframes biteSplashMist {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.55);
+    transform: translate(-50%, -50%) scale(0.48);
   }
-  24% {
+  18% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1.05);
+    transform: translate(-50%, -52%) scale(1.12);
+  }
+  46% {
+    opacity: 0.82;
+    transform: translate(-50%, -54%) scale(1.22);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(1.52);
+    transform: translate(-50%, -56%) scale(1.58);
   }
 }
 
-@keyframes biteWaterImpactRing {
+@keyframes biteWaterImpactRingHit {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) rotate(var(--ring-rot, 0deg)) scale(0.26);
+    transform: translate(-50%, -50%) rotate(var(--ring-rot, 0deg)) scale(0.18);
   }
-  17% {
-    opacity: 0.95;
+  12% {
+    opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) rotate(var(--ring-rot, 0deg)) scale(2.68);
+    transform: translate(-50%, -50%) rotate(var(--ring-rot, 0deg)) scale(3.35);
   }
 }
 
 @keyframes biteSplashBurstCore {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.28);
+    transform: translate(-50%, 38%) scale(0.12, 0.42);
   }
-  14% {
+  16% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1.22);
+    transform: translate(-50%, -46%) scale(1.42, 1.62);
   }
-  32% {
-    opacity: 0.82;
-    transform: translate(-50%, -50%) scale(1);
+  36% {
+    opacity: 0.88;
+    transform: translate(-50%, -22%) scale(1.08, 1.18);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(1.42);
+    transform: translate(-50%, -58%) scale(1.72, 1.95);
   }
 }
 
 @keyframes biteSplashDrop {
   0% {
     opacity: 0;
-    transform: translate(-50%, 0) rotate(var(--bite-angle, 0deg)) translateY(22px) scaleY(0.28);
+    transform: translate(-50%, 0) rotate(var(--bite-angle, 0deg)) translateY(26px) scaleY(0.22);
   }
-  11% {
+  12% {
     opacity: 1;
   }
-  26% {
-    opacity: 0.88;
-  }
-  52% {
-    opacity: 0.28;
+  28% {
+    opacity: 0.92;
   }
   100% {
     opacity: 0;
     transform: translate(-50%, 0) rotate(var(--bite-angle, 0deg))
-      translateY(calc(-1 * var(--bite-reach, 70px))) scaleY(1.22);
+      translateY(calc(-1 * var(--bite-reach, 70px))) scaleY(1.28);
   }
+}
+
+/* splash-ring / splash-core внутри .moving-ripple-point — тот же центр и дрейф, что у ripple */
+.lake .moving-ripple-point > .splash-ring {
+  top: 50%;
+}
+
+.lake .moving-ripple-point > .splash-core {
+  top: 50%;
 }
 
 .above-water {
@@ -1093,9 +1229,19 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
 }
 
 @keyframes splashPulse {
-  0%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
-  35% { opacity: 0.85; transform: translate(-50%, -52%) scale(1); }
-  70% { opacity: 0.25; transform: translate(-50%, -54%) scale(1.08); }
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+  35% {
+    opacity: 0.85;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  70% {
+    opacity: 0.25;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
 }
 
 .splash-core {
@@ -1111,8 +1257,15 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
 }
 
 @keyframes splashCore {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.75; }
-  50% { transform: translate(-50%, -54%) scale(1.12); opacity: 1; }
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.75;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.12);
+    opacity: 1;
+  }
 }
 
 .underwater {
@@ -1472,16 +1625,16 @@ body.is-reeling .fish-silhouette.visible .fish-underwater-shape {
     radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.06) 0%, transparent 55%);
 }
 
-/* «КЛЁВ!» — заметно, но не на весь экран; под HUD; синхронно со всплеском */
+/* «КЛЁВ!» — верхняя треть игровой зоны, короткий cinematic burst */
 .bite-callout {
   position: fixed;
   inset: 0;
   z-index: 19;
   pointer-events: none;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: min(20vh, 160px) min(20px, 4vw) min(26vh, 190px);
+  padding: min(14vh, 120px) min(20px, 4vw) min(34vh, 220px);
   visibility: hidden;
 }
 
@@ -1490,50 +1643,50 @@ body.is-reeling .fish-silhouette.visible .fish-underwater-shape {
 }
 
 .bite-callout.bite-callout--burst .bite-callout__text {
-  animation: biteCalloutBurst 1020ms cubic-bezier(0.32, 1.12, 0.36, 1) forwards;
+  animation: biteCalloutBurst 920ms cubic-bezier(0.28, 1.05, 0.36, 1) forwards;
 }
 
 .bite-callout__text {
-  font-size: clamp(1.95rem, 8vw, 3.35rem);
+  font-size: clamp(2.15rem, 9.5vw, 3.85rem);
   font-weight: 900;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #ffffff;
-  max-width: min(86vw, 400px);
+  color: #f4fcff;
+  max-width: min(92vw, 440px);
   text-align: center;
-  line-height: 1.06;
+  line-height: 1.05;
   text-shadow:
-    0 0 10px rgba(255, 255, 255, 0.95),
-    0 0 22px rgba(56, 235, 255, 1),
-    0 0 44px rgba(50, 190, 245, 0.62),
-    0 0 72px rgba(35, 155, 220, 0.35),
-    0 6px 26px rgba(0, 0, 0, 0.52);
+    0 0 14px rgba(255, 255, 255, 0.98),
+    0 0 28px rgba(72, 248, 255, 1),
+    0 0 52px rgba(50, 198, 255, 0.72),
+    0 0 92px rgba(35, 155, 220, 0.42),
+    0 8px 32px rgba(0, 4, 18, 0.62);
 }
 
 @keyframes biteCalloutBurst {
   0% {
-    transform: scale(0.75) translateY(16px);
+    transform: scale(0.52) translateY(28px);
     opacity: 0;
-    filter: blur(8px);
+    filter: blur(12px);
   }
-  20% {
+  14% {
     opacity: 1;
     filter: blur(0);
-    transform: scale(1.15) translateY(0);
+    transform: scale(1.22) translateY(0);
   }
-  34% {
-    transform: scale(1) translateY(0);
+  28% {
+    transform: scale(1.02) translateY(0);
     opacity: 1;
   }
-  68% {
-    transform: scale(1) translateY(0);
+  58% {
+    transform: scale(1.04) translateY(0);
     opacity: 1;
     filter: blur(0);
   }
   100% {
-    transform: scale(0.94) translateY(12px);
+    transform: scale(0.88) translateY(22px);
     opacity: 0;
-    filter: blur(6px);
+    filter: blur(10px);
   }
 }
 
@@ -1574,11 +1727,11 @@ body.event-small-catch .splash-ring--mid {
 
 @keyframes splashSmallCatchOnce {
   0% {
-    transform: translate(-50%, -48%) scale(0.88);
+    transform: translate(-50%, -50%) scale(0.88);
     opacity: 0.35;
   }
   45% {
-    transform: translate(-50%, -54%) scale(1.14);
+    transform: translate(-50%, -50%) scale(1.14);
     opacity: 0.95;
   }
   100% {
@@ -1594,52 +1747,52 @@ body.event-small-catch .splash-ring--mid {
   }
   35% {
     opacity: 0.55;
-    transform: translate(-50%, -52%) scale(1.02);
+    transform: translate(-50%, -50%) scale(1.02);
   }
   100% {
     opacity: 0.08;
-    transform: translate(-50%, -52%) scale(1.06);
+    transform: translate(-50%, -50%) scale(1.06);
   }
 }
 
 body.event-bite .splash-core {
-  animation: splashBiteBurst 0.55s cubic-bezier(0.33, 1.3, 0.52, 1) forwards;
+  animation: splashBiteBurst 0.42s cubic-bezier(0.26, 1.35, 0.42, 1) forwards;
 }
 
 body.event-bite .splash-ring--outer {
-  animation: splashRingBite 0.65s ease-out forwards;
+  animation: splashRingBite 0.48s cubic-bezier(0.14, 0.82, 0.22, 1) forwards;
 }
 
 body.event-bite .splash-ring--mid {
-  animation: splashRingBite 0.65s ease-out 0.08s forwards;
+  animation: splashRingBite 0.48s cubic-bezier(0.14, 0.82, 0.22, 1) 0.06s forwards;
 }
 
 @keyframes splashBiteBurst {
   0% {
-    transform: translate(-50%, -46%) scale(0.65);
-    opacity: 0.25;
+    transform: translate(-50%, -50%) scale(0.52);
+    opacity: 0.35;
   }
-  40% {
-    transform: translate(-50%, -56%) scale(1.28);
+  38% {
+    transform: translate(-50%, -50%) scale(1.38);
     opacity: 1;
   }
   100% {
-    transform: translate(-50%, -50%) scale(1.05);
-    opacity: 0.85;
+    transform: translate(-50%, -50%) scale(1.08);
+    opacity: 0.88;
   }
 }
 
 @keyframes splashRingBite {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.75);
+    transform: translate(-50%, -50%) scale(0.62);
   }
-  30% {
-    opacity: 0.95;
+  28% {
+    opacity: 1;
   }
   100% {
-    opacity: 0.15;
-    transform: translate(-50%, -56%) scale(1.15);
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.42);
   }
 }
 
@@ -1951,9 +2104,9 @@ body.event-snap .lake {
 }
 
 .fish-icon-fallback--hist {
-  width: clamp(24px, 4.6vw, 32px);
-  height: clamp(24px, 4.6vw, 32px);
-  font-size: clamp(0.95rem, 3.5vw, 1.15rem);
+  width: clamp(26px, 5vw, 34px);
+  height: clamp(26px, 5vw, 34px);
+  font-size: clamp(1rem, 3.6vw, 1.25rem);
 }
 
 .fish-icon-fallback--hudStatus {
@@ -1983,7 +2136,7 @@ body.event-snap .lake {
 .main-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 242px) minmax(0, 1fr) minmax(0, 240px);
+  grid-template-columns: minmax(0, 242px) minmax(0, 1fr) minmax(0, 246px);
   gap: 12px;
   align-items: start;
   min-height: min(46vh, 480px);
@@ -2088,15 +2241,27 @@ body.event-snap .lake {
 .hist-item__fish-wrap {
   position: relative;
   flex-shrink: 0;
-  width: clamp(24px, 4.6vw, 32px);
-  height: clamp(24px, 4.6vw, 32px);
+  width: clamp(26px, 5vw, 34px);
+  height: clamp(26px, 5vw, 34px);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .fish-icon-skeleton--hist {
-  border-radius: 10px;
+  border-radius: 11px;
+}
+
+/* Скелетон иконки в истории: без светлого «квадрата», в тон панели */
+#historyPanel .fish-icon-skeleton--hist {
+  background: linear-gradient(
+    148deg,
+    rgba(8, 26, 48, 0.94) 0%,
+    rgba(12, 34, 58, 0.82) 100%
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(62, 120, 175, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
 }
 
 /* HUD catch: без тёмного «квадрата» до загрузки PNG — место под иконку пустое */
@@ -2593,6 +2758,42 @@ img.fish-line-hud__icon.is-loaded {
     box-shadow 0.22s ease;
 }
 
+/* ---------- Панель «Последние раунды» (#historyPanel) ---------- */
+
+#historyPanel.panel-right.glass {
+  background: linear-gradient(
+    158deg,
+    rgba(6, 16, 36, 0.94) 0%,
+    rgba(4, 11, 28, 0.88) 48%,
+    rgba(3, 10, 24, 0.91) 100%
+  );
+  border: 1px solid rgba(72, 118, 168, 0.34);
+  box-shadow:
+    0 14px 44px rgba(0, 4, 18, 0.52),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  backdrop-filter: blur(22px) saturate(1.22);
+  -webkit-backdrop-filter: blur(22px) saturate(1.22);
+  border-radius: clamp(16px, 2.4vw, 20px);
+  padding: 12px 11px 13px;
+  align-self: start;
+  max-height: min(68vh, 540px);
+}
+
+#historyPanel .hist-heading-desktop {
+  font-size: 0.74rem;
+  letter-spacing: 0.2em;
+  font-weight: 700;
+  color: rgba(186, 212, 238, 0.72);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(72, 112, 158, 0.22);
+}
+
+#historyPanel .hist-toggle {
+  border-bottom-color: rgba(72, 112, 158, 0.22);
+  color: rgba(220, 236, 252, 0.88);
+}
+
 /* История */
 
 .hist-toggle {
@@ -2631,34 +2832,45 @@ img.fish-line-hud__icon.is-loaded {
 .hist-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 320px;
+  gap: 7px;
+  max-height: 302px;
   overflow-y: auto;
+  overflow-x: hidden;
+  padding: 3px 2px 4px 0;
 }
 
-/* Вертикальный скролл списка «Последние раунды» (#historyPanel .hist-list) */
+/* Скролл списка «Последние раунды» */
 #historyPanel .hist-list {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(110, 150, 210, 0.35) rgba(5, 15, 35, 0.65);
+  scrollbar-width: auto;
+  scrollbar-color: rgba(96, 138, 188, 0.48) rgba(4, 12, 26, 0.92);
 }
 
 #historyPanel .hist-list::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
 }
 
 #historyPanel .hist-list::-webkit-scrollbar-track {
-  background: rgba(5, 15, 35, 0.65);
-  border-radius: 999px;
+  background: rgba(4, 12, 26, 0.92);
+  border-radius: 12px;
+  margin-block: 4px;
 }
 
 #historyPanel .hist-list::-webkit-scrollbar-thumb {
-  background: rgba(110, 150, 210, 0.35);
-  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    rgba(110, 150, 195, 0.55) 0%,
+    rgba(72, 108, 148, 0.42) 100%
+  );
+  border-radius: 12px;
+  border: 2px solid rgba(4, 12, 26, 0.85);
 }
 
 #historyPanel .hist-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(150, 190, 255, 0.5);
+  background: linear-gradient(
+    180deg,
+    rgba(140, 180, 228, 0.62) 0%,
+    rgba(90, 130, 178, 0.52) 100%
+  );
 }
 
 #historyPanel .hist-list::-webkit-scrollbar-corner {
@@ -2667,49 +2879,89 @@ img.fish-line-hud__icon.is-loaded {
 
 .hist-item {
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: flex-start;
-  gap: 10px;
-  padding: 9px 14px;
-  border-radius: 999px;
-  font-size: 0.78rem;
+  gap: 11px 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 0.82rem;
   font-variant-numeric: tabular-nums;
   border: 1px solid transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
-/* История: иконки 24–32px */
+/* История: иконки рыб — чуть крупнее, без «пропажи» на подложке */
 .fish-icon--hist {
-  width: clamp(24px, 4.6vw, 32px);
-  height: clamp(24px, 4.6vw, 32px);
+  width: clamp(26px, 5vw, 34px);
+  height: clamp(26px, 5vw, 34px);
   filter:
-    brightness(1.08) contrast(1.08) saturate(1.05)
-    drop-shadow(0 0 8px rgba(120, 220, 255, 0.32))
-    drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55));
+    brightness(1.1) contrast(1.08) saturate(1.06)
+    drop-shadow(0 0 10px rgba(90, 210, 245, 0.38))
+    drop-shadow(0 2px 8px rgba(0, 0, 0, 0.55));
 }
 
 .hist-item__main {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+  justify-content: flex-start;
   text-align: left;
+}
+
+.hist-item__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 700;
+  font-size: 0.84rem;
+  letter-spacing: 0.03em;
+  line-height: 1.25;
+  color: inherit;
+  opacity: 0.94;
+}
+
+.hist-item__mult {
+  flex: 0 0 auto;
+  margin-left: auto;
+  font-weight: 800;
+  font-size: 0.88rem;
+  letter-spacing: 0.02em;
+  color: inherit;
+  opacity: 1;
+  white-space: nowrap;
+}
+
+.hist-item__amount {
+  flex: 1 0 100%;
+  text-align: right;
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  margin-top: 2px;
 }
 
 .hist-item__marker {
   flex-shrink: 0;
-  width: clamp(24px, 4.6vw, 30px);
-  height: clamp(24px, 4.6vw, 30px);
-  border-radius: 8px;
+  width: clamp(28px, 5vw, 34px);
+  height: clamp(28px, 5vw, 34px);
+  border-radius: 11px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 800;
   line-height: 1;
 }
 
 .hist-item__marker--empty {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px dashed rgba(255, 255, 255, 0.22);
-  color: rgba(233, 241, 251, 0.35);
+  background: rgba(14, 28, 52, 0.72);
+  border: 1px solid rgba(82, 118, 168, 0.35);
+  color: rgba(148, 178, 218, 0.62);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .hist-item__marker--empty::before {
@@ -2717,44 +2969,141 @@ img.fish-line-hud__icon.is-loaded {
 }
 
 .hist-item__marker--snap {
-  background: rgba(255, 51, 85, 0.22);
-  border: 1px solid rgba(255, 51, 85, 0.5);
-  color: #ff9fb2;
-  box-shadow: 0 0 12px rgba(255, 51, 85, 0.25);
+  background: linear-gradient(145deg, rgba(92, 18, 32, 0.95), rgba(46, 10, 22, 0.88));
+  border: 1px solid rgba(228, 96, 118, 0.46);
+  color: #ffb8c8;
+  box-shadow:
+    0 0 14px rgba(228, 60, 90, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .hist-item__marker--snap::before {
   content: "!";
 }
 
+.hist-item__marker--ghost {
+  border-radius: 11px;
+  background: rgba(12, 26, 48, 0.35);
+  border: 1px dashed rgba(72, 108, 150, 0.22);
+}
+
+.hist-item__placeholder-line {
+  display: block;
+  height: 10px;
+  margin-block: 4px;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    rgba(40, 72, 110, 0.22) 0%,
+    rgba(48, 84, 120, 0.14) 45%,
+    rgba(40, 72, 110, 0.22) 100%
+  );
+  max-width: 72%;
+}
+
+.hist-item--placeholder {
+  opacity: 0.72;
+  pointer-events: none;
+  background: rgba(8, 18, 38, 0.38) !important;
+  border-color: rgba(60, 92, 132, 0.18) !important;
+  box-shadow: none !important;
+}
+
+/* Выигрыш — тёмный бирюзово-зелёный */
 .hist-item.hist-win-green {
-  background: rgba(61, 223, 140, 0.18);
-  border-color: rgba(61, 223, 140, 0.42);
-  color: #c8ffe8;
+  background: linear-gradient(
+    132deg,
+    rgba(10, 48, 52, 0.82) 0%,
+    rgba(6, 26, 42, 0.78) 50%,
+    rgba(8, 32, 44, 0.8) 100%
+  );
+  border-color: rgba(52, 190, 168, 0.42);
+  color: rgba(178, 248, 226, 0.96);
 }
 
+.hist-item.hist-win-green .hist-item__mult {
+  color: rgba(130, 245, 215, 1);
+  text-shadow: 0 0 18px rgba(56, 210, 180, 0.35);
+}
+
+.hist-item.hist-win-green .hist-item__amount {
+  color: rgba(210, 255, 238, 1);
+  text-shadow: 0 0 14px rgba(72, 220, 190, 0.28);
+}
+
+/* Крупный выигрыш — тёплый премиальный акцент */
 .hist-item.hist-win-gold {
-  background: rgba(238, 207, 82, 0.22);
-  border-color: rgba(238, 207, 82, 0.5);
-  color: #fff6cf;
+  background: linear-gradient(
+    132deg,
+    rgba(42, 34, 14, 0.88) 0%,
+    rgba(22, 26, 38, 0.78) 52%,
+    rgba(28, 22, 18, 0.82) 100%
+  );
+  border-color: rgba(218, 182, 72, 0.42);
+  color: rgba(255, 242, 210, 0.96);
 }
 
+.hist-item.hist-win-gold .hist-item__mult {
+  color: rgba(255, 224, 140, 1);
+  text-shadow: 0 0 16px rgba(238, 200, 90, 0.38);
+}
+
+.hist-item.hist-win-gold .hist-item__amount {
+  color: rgba(255, 236, 188, 1);
+  text-shadow: 0 0 14px rgba(230, 190, 72, 0.35);
+}
+
+/* Обрыв — бордово-красный тёмный */
 .hist-item.hist-snap {
-  background: rgba(255, 51, 85, 0.16);
-  border-color: rgba(255, 51, 85, 0.42);
-  color: #ffc8d4;
+  background: linear-gradient(
+    132deg,
+    rgba(56, 14, 26, 0.82) 0%,
+    rgba(28, 8, 18, 0.78) 48%,
+    rgba(36, 12, 22, 0.82) 100%
+  );
+  border-color: rgba(210, 72, 96, 0.42);
+  color: rgba(255, 205, 214, 0.94);
 }
 
+.hist-item.hist-snap .hist-item__mult {
+  color: rgba(255, 168, 186, 1);
+  text-shadow: 0 0 14px rgba(230, 70, 100, 0.28);
+}
+
+/* Пустой заброс — нейтральный тёмно-синий */
 .hist-item.hist-empty {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
-  color: rgba(233, 241, 251, 0.55);
+  background: linear-gradient(
+    132deg,
+    rgba(10, 24, 52, 0.72) 0%,
+    rgba(6, 14, 36, 0.68) 100%
+  );
+  border-color: rgba(74, 108, 158, 0.32);
+  color: rgba(178, 202, 236, 0.84);
 }
 
+.hist-item.hist-empty .hist-item__amount {
+  font-weight: 800;
+  font-size: 0.96rem;
+  color: rgba(210, 226, 248, 0.95);
+}
+
+/* Малёк */
 .hist-item.hist-small {
-  background: rgba(61, 223, 140, 0.14);
-  border-color: rgba(61, 223, 140, 0.38);
-  color: #c8ffe8;
+  background: linear-gradient(
+    132deg,
+    rgba(12, 44, 52, 0.78) 0%,
+    rgba(8, 28, 42, 0.74) 100%
+  );
+  border-color: rgba(72, 200, 188, 0.38);
+  color: rgba(188, 242, 232, 0.94);
+}
+
+.hist-item.hist-small .hist-item__mult {
+  color: rgba(120, 236, 218, 1);
+}
+
+.hist-item.hist-small .hist-item__amount {
+  color: rgba(210, 252, 246, 1);
 }
 
 .dock-bar {
@@ -3740,15 +4089,20 @@ button:disabled {
     font-size: clamp(1.24rem, 5vw, 1.58rem);
   }
 
+  .hist-item__fish-wrap {
+    width: 24px;
+    height: 24px;
+  }
+
   .fish-icon--hist {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
   }
 
   .fish-icon-fallback--hist {
-    width: 22px;
-    height: 22px;
-    font-size: 0.88rem;
+    width: 24px;
+    height: 24px;
+    font-size: 0.92rem;
   }
 
   .hist-item__marker {

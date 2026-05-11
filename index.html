@@ -34,9 +34,6 @@
       <div class="water-split">
         <div class="above-water">
           <div class="caustics"></div>
-          <div class="splash-ring splash-ring--outer"></div>
-          <div class="splash-ring splash-ring--mid"></div>
-          <div class="splash-core"></div>
         </div>
 
         <div class="underwater" id="waterZone">
@@ -71,50 +68,61 @@
           </div>
         </div>
       </div>
-      <!-- Точка на воде без wake/trail (без световых пятен) -->
-      <div class="water-surface-struggle" aria-hidden="true">
-        <div class="water-struggle-motion">
-          <div class="moving-ripple-point">
-            <div class="water-ripple" aria-hidden="true">
-              <span class="water-ripple__core"></span>
-              <span class="water-ripple__ring"></span>
-              <span class="water-ripple__ring"></span>
-              <span class="water-ripple__ring"></span>
+
+      <!-- Якорь --lake-entry-* ; ripple, splash-ring/core, bite-splash и дрейф внутри .moving-ripple-point -->
+      <div class="surface-impact-anchor" aria-hidden="true">
+        <div class="water-surface-struggle" aria-hidden="true">
+          <div class="water-struggle-motion">
+            <div class="moving-ripple-point">
+              <div class="splash-ring splash-ring--outer"></div>
+              <div class="splash-ring splash-ring--mid"></div>
+              <div class="splash-core"></div>
+              <div class="water-ripple" aria-hidden="true">
+                <span class="water-ripple__core"></span>
+                <span class="water-ripple__ring"></span>
+                <span class="water-ripple__ring"></span>
+                <span class="water-ripple__ring"></span>
+                <span class="ripple-hit"></span>
+              </div>
+              <div class="bite-splash" id="biteSplash" aria-hidden="true">
+                <div class="bite-splash__motion">
+                  <div class="bite-splash__stage">
+                    <div class="bite-splash__water-flash" aria-hidden="true"></div>
+                    <div class="bite-splash__mist"></div>
+                    <div class="bite-splash__water-impact">
+                      <span class="bite-splash__impact-ring bite-splash__impact-ring--1"></span>
+                      <span class="bite-splash__impact-ring bite-splash__impact-ring--2"></span>
+                      <span class="bite-splash__impact-ring bite-splash__impact-ring--3"></span>
+                      <span class="bite-splash__impact-ring bite-splash__impact-ring--4"></span>
+                    </div>
+                    <div class="bite-splash__crown" aria-hidden="true"></div>
+                    <div class="bite-splash__burst"></div>
+                    <div class="bite-splash__droplets">
+                      <span class="bite-splash__drop" style="--bite-angle: -94deg; --bite-reach: 54px; --bite-d: 0ms; --bite-drop-dur: 760ms"></span>
+                      <span class="bite-splash__drop bite-splash__drop--shard" style="--bite-angle: -82deg; --bite-reach: 76px; --bite-d: 12ms; --bite-drop-dur: 820ms"></span>
+                      <span class="bite-splash__drop" style="--bite-angle: -71deg; --bite-reach: 46px; --bite-d: 24ms; --bite-drop-dur: 700ms"></span>
+                      <span class="bite-splash__drop bite-splash__drop--shard" style="--bite-angle: -60deg; --bite-reach: 82px; --bite-d: 4ms; --bite-drop-dur: 780ms"></span>
+                      <span class="bite-splash__drop" style="--bite-angle: -49deg; --bite-reach: 58px; --bite-d: 32ms; --bite-drop-dur: 740ms"></span>
+                      <span class="bite-splash__drop bite-splash__drop--shard" style="--bite-angle: -38deg; --bite-reach: 72px; --bite-d: 18ms; --bite-drop-dur: 800ms"></span>
+                      <span class="bite-splash__drop" style="--bite-angle: -27deg; --bite-reach: 50px; --bite-d: 40ms; --bite-drop-dur: 680ms"></span>
+                      <span class="bite-splash__drop bite-splash__drop--shard" style="--bite-angle: -16deg; --bite-reach: 78px; --bite-d: 8ms; --bite-drop-dur: 760ms"></span>
+                      <span class="bite-splash__drop" style="--bite-angle: -5deg; --bite-reach: 64px; --bite-d: 28ms; --bite-drop-dur: 720ms"></span>
+                      <span class="bite-splash__drop bite-splash__drop--shard" style="--bite-angle: 6deg; --bite-reach: 48px; --bite-d: 44ms; --bite-drop-dur: 700ms"></span>
+                      <span class="bite-splash__drop" style="--bite-angle: 17deg; --bite-reach: 80px; --bite-d: 14ms; --bite-drop-dur: 840ms"></span>
+                      <span class="bite-splash__drop bite-splash__drop--shard" style="--bite-angle: 28deg; --bite-reach: 56px; --bite-d: 36ms; --bite-drop-dur: 740ms"></span>
+                      <span class="bite-splash__drop" style="--bite-angle: 39deg; --bite-reach: 70px; --bite-d: 22ms; --bite-drop-dur: 780ms"></span>
+                      <span class="bite-splash__drop bite-splash__drop--shard" style="--bite-angle: 50deg; --bite-reach: 44px; --bite-d: 48ms; --bite-drop-dur: 660ms"></span>
+                      <span class="bite-splash__drop" style="--bite-angle: 61deg; --bite-reach: 74px; --bite-d: 6ms; --bite-drop-dur: 800ms"></span>
+                      <span class="bite-splash__drop bite-splash__drop--shard" style="--bite-angle: 72deg; --bite-reach: 52px; --bite-d: 30ms; --bite-drop-dur: 720ms"></span>
+                      <span class="bite-splash__drop" style="--bite-angle: -58deg; --bite-reach: 68px; --bite-d: 16ms; --bite-drop-dur: 760ms"></span>
+                      <span class="bite-splash__drop bite-splash__drop--shard" style="--bite-angle: 34deg; --bite-reach: 86px; --bite-d: 2ms; --bite-drop-dur: 880ms"></span>
+                      <span class="bite-splash__drop" style="--bite-angle: -33deg; --bite-reach: 42px; --bite-d: 52ms; --bite-drop-dur: 640ms"></span>
+                      <span class="bite-splash__drop bite-splash__drop--shard" style="--bite-angle: 83deg; --bite-reach: 62px; --bite-d: 26ms; --bite-drop-dur: 750ms"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
-      <div class="bite-splash" id="biteSplash" aria-hidden="true">
-        <div class="bite-splash__stage">
-          <div class="bite-splash__mist"></div>
-          <div class="bite-splash__water-impact">
-            <span class="bite-splash__impact-ring bite-splash__impact-ring--1"></span>
-            <span class="bite-splash__impact-ring bite-splash__impact-ring--2"></span>
-            <span class="bite-splash__impact-ring bite-splash__impact-ring--3"></span>
-            <span class="bite-splash__impact-ring bite-splash__impact-ring--4"></span>
-          </div>
-          <div class="bite-splash__burst"></div>
-          <div class="bite-splash__droplets">
-            <span class="bite-splash__drop" style="--bite-angle: -94deg; --bite-reach: 54px; --bite-d: 0ms; --bite-drop-dur: 760ms"></span>
-            <span class="bite-splash__drop bite-splash__drop--shard" style="--bite-angle: -82deg; --bite-reach: 76px; --bite-d: 12ms; --bite-drop-dur: 820ms"></span>
-            <span class="bite-splash__drop" style="--bite-angle: -71deg; --bite-reach: 46px; --bite-d: 24ms; --bite-drop-dur: 700ms"></span>
-            <span class="bite-splash__drop bite-splash__drop--shard" style="--bite-angle: -60deg; --bite-reach: 82px; --bite-d: 4ms; --bite-drop-dur: 780ms"></span>
-            <span class="bite-splash__drop" style="--bite-angle: -49deg; --bite-reach: 58px; --bite-d: 32ms; --bite-drop-dur: 740ms"></span>
-            <span class="bite-splash__drop bite-splash__drop--shard" style="--bite-angle: -38deg; --bite-reach: 72px; --bite-d: 18ms; --bite-drop-dur: 800ms"></span>
-            <span class="bite-splash__drop" style="--bite-angle: -27deg; --bite-reach: 50px; --bite-d: 40ms; --bite-drop-dur: 680ms"></span>
-            <span class="bite-splash__drop bite-splash__drop--shard" style="--bite-angle: -16deg; --bite-reach: 78px; --bite-d: 8ms; --bite-drop-dur: 760ms"></span>
-            <span class="bite-splash__drop" style="--bite-angle: -5deg; --bite-reach: 64px; --bite-d: 28ms; --bite-drop-dur: 720ms"></span>
-            <span class="bite-splash__drop bite-splash__drop--shard" style="--bite-angle: 6deg; --bite-reach: 48px; --bite-d: 44ms; --bite-drop-dur: 700ms"></span>
-            <span class="bite-splash__drop" style="--bite-angle: 17deg; --bite-reach: 80px; --bite-d: 14ms; --bite-drop-dur: 840ms"></span>
-            <span class="bite-splash__drop bite-splash__drop--shard" style="--bite-angle: 28deg; --bite-reach: 56px; --bite-d: 36ms; --bite-drop-dur: 740ms"></span>
-            <span class="bite-splash__drop" style="--bite-angle: 39deg; --bite-reach: 70px; --bite-d: 22ms; --bite-drop-dur: 780ms"></span>
-            <span class="bite-splash__drop bite-splash__drop--shard" style="--bite-angle: 50deg; --bite-reach: 44px; --bite-d: 48ms; --bite-drop-dur: 660ms"></span>
-            <span class="bite-splash__drop" style="--bite-angle: 61deg; --bite-reach: 74px; --bite-d: 6ms; --bite-drop-dur: 800ms"></span>
-            <span class="bite-splash__drop bite-splash__drop--shard" style="--bite-angle: 72deg; --bite-reach: 52px; --bite-d: 30ms; --bite-drop-dur: 720ms"></span>
-            <span class="bite-splash__drop" style="--bite-angle: -58deg; --bite-reach: 68px; --bite-d: 16ms; --bite-drop-dur: 760ms"></span>
-            <span class="bite-splash__drop bite-splash__drop--shard" style="--bite-angle: 34deg; --bite-reach: 86px; --bite-d: 2ms; --bite-drop-dur: 880ms"></span>
-            <span class="bite-splash__drop" style="--bite-angle: -33deg; --bite-reach: 42px; --bite-d: 52ms; --bite-drop-dur: 640ms"></span>
-            <span class="bite-splash__drop bite-splash__drop--shard" style="--bite-angle: 83deg; --bite-reach: 62px; --bite-d: 26ms; --bite-drop-dur: 750ms"></span>
           </div>
         </div>
       </div>
