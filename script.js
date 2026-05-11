@@ -3,7 +3,7 @@
 
   /**
    * @typedef {'idle'|'casting'|'noCatch'|'smallCatch'|'bite'|'reeling'|'cashedOut'|'snapped'} GameState
-   * @typedef {{ id: string, name: string, chance: number, startMultiplier: number, color: string }} FishType
+   * @typedef {{ id: string, name: string, chance: number, startMultiplier: number, color: string, kind?: string }} FishType
    */
 
   /** Единые пути к исходным PNG (preload + canvas; в UI не подставляются). */
@@ -14,6 +14,8 @@
     shuka: "./assets/fish/fish_shuka.png",
     som: "./assets/fish/fish_som.png",
     gold: "./assets/fish/fish_gold.png",
+    moon_carp: "./assets/fish/moon_carp.png",
+    zander: "./assets/fish/zander.png",
   };
 
   /** Игровой id рыбы или "malek" → ключ fishImages / cleanedFishImages */
@@ -24,6 +26,8 @@
     pike: "shuka",
     catfish: "som",
     goldfish: "gold",
+    moon_carp: "moon_carp",
+    zander: "zander",
   };
 
   /** Кэш data URL после removeWhiteBackground (ключи malek, karas, …). Только они попадают в UI. */
@@ -263,14 +267,37 @@
     });
   }
 
-  /** Панель «Рыбы» и pickFish(): доли внутри исхода fish (50+30+12+6+2 = 100%). */
+  /** Панель «Рыбы» и pickFishFromPool(): доли внутри выбранного пула */
   const fishTypes = [
-    { id: "crucian", name: "Карась", chance: 50, startMultiplier: 1.2, color: "green" },
+    { id: "crucian", name: "Карась", chance: 31, startMultiplier: 1.2, color: "green" },
     { id: "perch", name: "Окунь", chance: 30, startMultiplier: 2, color: "blue" },
+    { id: "zander", name: "Судак", chance: 18, startMultiplier: 3, color: "teal" },
     { id: "pike", name: "Щука", chance: 12, startMultiplier: 3.5, color: "purple" },
     { id: "catfish", name: "Сом", chance: 6, startMultiplier: 6, color: "orange" },
     { id: "goldfish", name: "Золотая рыба", chance: 2, startMultiplier: 10, color: "gold" },
+    {
+      id: "moon_carp",
+      name: "Лунный карп",
+      chance: 1,
+      startMultiplier: 5,
+      color: "violet",
+      kind: "bonus",
+    },
   ];
+
+  /** Пул рыб для outcome «fish» в обычном дневном режиме (все виды из fishTypes) */
+  const dayFishPool = fishTypes.slice();
+
+  /** Пул рыбы только в бонусной ночи (без карася, окуня; малёк — отдельный outcome и здесь отсутствует) */
+  const nightBonusFishPool = fishTypes.filter(function (f) {
+    return (
+      f.id === "zander" ||
+      f.id === "pike" ||
+      f.id === "catfish" ||
+      f.id === "goldfish" ||
+      f.id === "moon_carp"
+    );
+  });
 
   const BET_MIN = 100;
   const BET_MAX = 5000;
@@ -288,6 +315,13 @@
   const BITE_SCENE_FLASH_MS = 420;
   /** Максимальный множитель обрыва в прототипе */
   const CRASH_MULT_CAP = 20;
+  /** Сколько бесплатных забросов выдаётся при поимке лунного карпа */
+  const NIGHT_BONUS_CASTS_GRANT = 5;
+  /**
+   * TEST MODE: Moon Carp every 5th daytime cast
+   * Временно: каждый N-й оплаченный дневной заброс — принудительно лунный карп (визуал день→ночь). Убрать перед продакшеном.
+   */
+  const TEST_MOON_CARP_EVERY_NTH_DAYTIME_CAST = 5;
 
   const els = {
     balanceDisplay: document.getElementById("balanceDisplay"),
@@ -334,6 +368,9 @@
     fightChartArea: document.getElementById("fightChartArea"),
     fightChartDot: document.getElementById("fightChartDot"),
     fightChartHint: document.getElementById("fightChartHint"),
+    nightBonusStat: document.getElementById("nightBonusStat"),
+    nightBonusCastsDisplay: document.getElementById("nightBonusCastsDisplay"),
+    moonBonusTransition: document.getElementById("moonBonusTransition"),
   };
 
   let balance = START_BALANCE;
@@ -350,6 +387,12 @@
   /** Скрытая точка обрыва (множитель) */
   let crashPoint = Infinity;
   let betLocked = 0;
+  /** Оставшиеся бесплатные забросы ночного бонуса (после лунного карпа) */
+  let nightBonusCastsRemaining = 0;
+  /** Раунд начат без списания ставки — при входе в idle списать один бонусный заброс */
+  let castBeganWithNightBonusFree = false;
+  /** Счётчик оплаченных дневных забросов (бесплатные ночные не считаются). TEST MODE: см. TEST_MOON_CARP_EVERY_NTH_DAYTIME_CAST */
+  let testDaytimeCastCount = 0;
   let rafId = 0;
   let lastTs = 0;
   /** Время старта фазы reeling (для ускорения роста) */
@@ -564,10 +607,15 @@
     return "×" + x.toFixed(2);
   }
 
-  /** Ставка: шаг, лимиты и не больше доступного баланса */
+  /** Ставка: шаг, лимиты и не больше доступного баланса (в ночном бонусе баланс не ограничивает ставку для расчёта выигрыша) */
   function clampBet() {
     let b = Math.round(bet / BET_STEP) * BET_STEP;
     b = Math.min(BET_MAX, b);
+    if (nightBonusCastsRemaining > 0) {
+      if (b < BET_MIN) b = BET_MIN;
+      bet = b;
+      return;
+    }
     const affordable = Math.floor(balance / BET_STEP) * BET_STEP;
     b = Math.min(b, affordable);
     if (b < BET_MIN) {
@@ -576,11 +624,72 @@
     bet = b;
   }
 
+  function syncNightBonusUI(opt) {
+    var skipBackground = opt && opt.skipBackground;
+    var nightBonusModeOn = nightBonusCastsRemaining > 0;
+    if (!skipBackground) {
+      document.body.classList.toggle("is-night-bonus", nightBonusModeOn);
+    }
+    if (!els.nightBonusStat || !els.nightBonusCastsDisplay) return;
+    if (nightBonusModeOn) {
+      els.nightBonusStat.hidden = false;
+      els.nightBonusCastsDisplay.textContent = String(nightBonusCastsRemaining);
+    } else {
+      els.nightBonusStat.hidden = true;
+    }
+  }
+
+  /** Длительность совпадает с CSS `.moon-bonus-transition.is-animating` (2.2s ≈ 1800–2500ms) */
+  const MOON_BONUS_TRANSITION_MS = 2200;
+  /** Переключение основного фона на ночной — в середине плавного появления оверлея */
+  const MOON_BONUS_BG_SWITCH_MS = 360;
+  /** После окончания надписи ночного бонуса — до старта роста множителя (reeling / «краш-индикатор»), 500–800ms */
+  const MOON_BONUS_POST_LABEL_DELAY_MS = 650;
+
+  /**
+   * Полноэкранный неоновый текст при входе/продлении ночного бонуса (лунный карп).
+   * @param {boolean} [isExtendNightBonus] повторный карп в бонусе → «+5 БЕСПЛАТНЫХ…»
+   */
+  function playMoonBonusTransition(isExtendNightBonus) {
+    // TODO: play night bonus transition sound here
+    triggerVibration([80, 40, 120]);
+    var el = els.moonBonusTransition;
+    var sub = el ? el.querySelector(".moon-bonus-transition__sub") : null;
+    if (sub) {
+      sub.textContent = isExtendNightBonus
+        ? "+5 БЕСПЛАТНЫХ ЗАБРОСОВ"
+        : NIGHT_BONUS_CASTS_GRANT + " БЕСПЛАТНЫХ ЗАБРОСОВ";
+    }
+    if (!el) {
+      if (nightBonusCastsRemaining > 0) document.body.classList.add("is-night-bonus");
+      return;
+    }
+    el.hidden = false;
+    el.setAttribute("aria-hidden", "false");
+    el.classList.remove("is-animating");
+    void el.offsetWidth;
+    el.classList.add("is-animating");
+    window.setTimeout(function () {
+      if (nightBonusCastsRemaining > 0) {
+        document.body.classList.add("is-night-bonus");
+      }
+    }, MOON_BONUS_BG_SWITCH_MS);
+    window.setTimeout(function () {
+      el.classList.remove("is-animating");
+      el.hidden = true;
+      el.setAttribute("aria-hidden", "true");
+      if (nightBonusCastsRemaining > 0) {
+        document.body.classList.add("is-night-bonus");
+      }
+    }, MOON_BONUS_TRANSITION_MS);
+  }
+
   function refreshMoneyUI() {
     els.balanceDisplay.textContent = formatMoney(balance);
     els.betDisplay.textContent = formatMoney(bet);
     els.betDisplayTop.textContent = formatMoney(bet);
     syncBetPresetUI();
+    syncNightBonusUI();
   }
 
   function syncBetPresetUI() {
@@ -593,7 +702,7 @@
   }
 
   /**
-   * Исход заброса после casting: 40% пусто, 20% малёк, 40% рыба (вид — только через pickFish()).
+   * Исход заброса после casting: 40% пусто, 20% малёк, 40% рыба (вид — из dayFishPool или nightBonusFishPool).
    * @returns {{ type: 'noCatch' } | { type: 'smallCatch' } | { type: 'fish' }}
    */
   function rollCastOutcome() {
@@ -603,17 +712,30 @@
     return { type: "fish" };
   }
 
-  /** Случайная рыба по полю chance (только при outcome.type === "fish"). */
-  function pickFish() {
-    const total = fishTypes.reduce(function (sum, f) {
+  /** Выбор рыбы по полям chance внутри одного пула (дневной или ночной) */
+  function pickFishFromPool(pool) {
+    const total = pool.reduce(function (sum, f) {
       return sum + f.chance;
     }, 0);
     let r = Math.random() * total;
-    for (let i = 0; i < fishTypes.length; i++) {
-      r -= fishTypes[i].chance;
-      if (r <= 0) return fishTypes[i];
+    for (let i = 0; i < pool.length; i++) {
+      r -= pool[i].chance;
+      if (r <= 0) return pool[i];
     }
-    return fishTypes[fishTypes.length - 1];
+    return pool[pool.length - 1];
+  }
+
+  /** Случайная рыба в дневном пуле (совместимость) */
+  function pickFish() {
+    return pickFishFromPool(dayFishPool);
+  }
+
+  /** @param {string} id */
+  function findFishTypeById(id) {
+    for (var i = 0; i < fishTypes.length; i++) {
+      if (fishTypes[i].id === id) return fishTypes[i];
+    }
+    return null;
   }
 
   /**
@@ -845,8 +967,10 @@
     var chartDenomByFish = {
       crucian: 6.2,
       perch: 6.45,
+      zander: 6.6,
       pike: 6.75,
       catfish: 7.05,
+      moon_carp: 7.2,
       goldfish: 7.35,
     };
     var visSpan = Math.max(sm * (chartDenomByFish[currentFish.id] || 6.5), 2.85);
@@ -1311,6 +1435,11 @@
 
   /** Возврат в idle: сброс переменных раунда */
   function enterIdle() {
+    if (castBeganWithNightBonusFree) {
+      nightBonusCastsRemaining = Math.max(0, nightBonusCastsRemaining - 1);
+    }
+    castBeganWithNightBonusFree = false;
+
     phase = "idle";
     stopLoop();
     currentFish = null;
@@ -1524,13 +1653,31 @@
     if (phase !== "idle") return;
 
     clampBet();
-    if (bet > balance || bet < BET_MIN) {
-      els.statusText.textContent = "Недостаточно средств или некорректная ставка.";
+    var useNightBonusFree = nightBonusCastsRemaining > 0;
+    if (!useNightBonusFree) {
+      if (bet > balance || bet < BET_MIN) {
+        els.statusText.textContent = "Недостаточно средств или некорректная ставка.";
+        refreshMoneyUI();
+        return;
+      }
+    } else if (bet < BET_MIN) {
+      els.statusText.textContent = "Некорректная ставка.";
       refreshMoneyUI();
       return;
     }
 
-    balance -= bet;
+    var forceTestMoonCarpThisCast = false;
+    if (!useNightBonusFree) {
+      testDaytimeCastCount += 1;
+      if (testDaytimeCastCount % TEST_MOON_CARP_EVERY_NTH_DAYTIME_CAST === 0) {
+        forceTestMoonCarpThisCast = true;
+      }
+    }
+
+    castBeganWithNightBonusFree = useNightBonusFree;
+    if (!useNightBonusFree) {
+      balance -= bet;
+    }
     betLocked = bet;
     refreshMoneyUI();
 
@@ -1551,13 +1698,24 @@
 
       currentFish = null;
       var outcome = rollCastOutcome();
+      /* TEST MODE: Moon Carp every 5th daytime cast */
+      if (forceTestMoonCarpThisCast) {
+        outcome = { type: "fish" };
+      }
+      if (castBeganWithNightBonusFree && (outcome.type === "noCatch" || outcome.type === "smallCatch")) {
+        outcome = { type: "fish" };
+      }
       console.log("Cast outcome:", outcome.type);
 
       if (outcome.type === "noCatch") {
         phase = "noCatch";
         currentMultiplier = 1;
         playReelWindTicks();
-        pushHistory({ label: "Пусто", amount: "−" + formatMoney(betLocked) + " ₸" }, "hist-empty");
+        if (castBeganWithNightBonusFree) {
+          pushHistory({ label: "Пусто", amount: "0 ₸" }, "hist-empty");
+        } else {
+          pushHistory({ label: "Пусто", amount: "−" + formatMoney(betLocked) + " ₸" }, "hist-empty");
+        }
         syncButtons();
         syncStatusText();
         syncFishLine();
@@ -1597,9 +1755,23 @@
         return;
       }
 
-      currentFish = pickFish();
+      var fishPool = castBeganWithNightBonusFree ? nightBonusFishPool : dayFishPool;
+      currentFish = forceTestMoonCarpThisCast
+        ? findFishTypeById("moon_carp") || pickFishFromPool(fishPool)
+        : pickFishFromPool(fishPool);
       phase = "bite";
       currentMultiplier = currentFish.startMultiplier;
+      if (currentFish.id === "moon_carp") {
+        var alreadyInNightBonus = nightBonusCastsRemaining > 0;
+        nightBonusCastsRemaining += NIGHT_BONUS_CASTS_GRANT;
+        if (alreadyInNightBonus) {
+          syncNightBonusUI();
+          playMoonBonusTransition(true);
+        } else {
+          syncNightBonusUI({ skipBackground: true });
+          playMoonBonusTransition(false);
+        }
+      }
       if (els.flashBite) flash(els.flashBite, 320);
       triggerVibration([100, 40, 140]);
       triggerBiteSplashEffects();
@@ -1614,10 +1786,15 @@
       els.catchDisplay.textContent = formatMoney(currentWin()) + " ₸";
       renderRoundVisuals();
 
+      var delayBeforeReelingMs =
+        currentFish.id === "moon_carp"
+          ? MOON_BONUS_TRANSITION_MS + MOON_BONUS_POST_LABEL_DELAY_MS
+          : 550;
+
       window.setTimeout(function () {
         if (phase !== "bite") return;
         startReeling();
-      }, 550);
+      }, delayBeforeReelingMs);
     }, delay);
   }
 

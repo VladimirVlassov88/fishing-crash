@@ -26,6 +26,8 @@
   /* Награда поверх UI приложения, ниже полноэкранных flash */
   --z-reward-popup: 46;
   --z-flash: 50;
+  /* Полноэкранный текстовый оверлей ночного бонуса: над UI, под вспышками клёва */
+  --z-moon-bonus-transition: 44;
   /* Единая точка входа в воду (ripple / splash / декор-кольца) */
   --lake-entry-x: 50%;
   --lake-entry-bottom-pct: 46%;
@@ -74,10 +76,17 @@ img {
   background-color: var(--bg-deep);
   background-image:
     linear-gradient(180deg, rgba(0, 10, 25, 0.35), rgba(0, 10, 25, 0.35)),
-    url("./assets/backgrounds/bg_main.png");
+    url("./assets/backgrounds/bg_day.png");
   background-position: center center;
   background-size: cover;
   background-repeat: no-repeat;
+}
+
+/* Ночной фон сцены: добавить класс body.is-night-bonus (дневной остаётся по умолчанию) */
+body.is-night-bonus .scene-back {
+  background-image:
+    linear-gradient(180deg, rgba(0, 10, 25, 0.35), rgba(0, 10, 25, 0.35)),
+    url("./assets/backgrounds/bg_night.png");
 }
 
 /* Короткая тряска при клёве — фон + UI слегка вместе (JS: body.bite-shake) */
@@ -87,6 +96,128 @@ body.bite-shake .scene-back {
 
 body.bite-shake .app {
   animation: biteUiShake 215ms cubic-bezier(0.33, 0.02, 0.28, 1) forwards;
+}
+
+/* ---------- Переход в ночной бонус: затемнение + неоновый текст (без PNG) ---------- */
+
+.moon-bonus-transition {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-moon-bonus-transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(12px, 4vw, 28px);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.moon-bonus-transition__backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 95% 72% at 50% 40%, rgba(24, 92, 155, 0.38) 0%, transparent 58%),
+    linear-gradient(180deg, rgba(0, 10, 28, 0.76) 0%, rgba(0, 3, 12, 0.9) 100%);
+}
+
+.moon-bonus-transition.is-animating {
+  visibility: visible;
+  animation: moonBonusTransitionShell 2.2s cubic-bezier(0.45, 0.02, 0.2, 1) forwards;
+}
+
+.moon-bonus-transition__inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: min(94vw, 600px);
+  will-change: opacity, transform;
+}
+
+.moon-bonus-transition.is-animating .moon-bonus-transition__inner {
+  animation: moonBonusTransitionInner 2.2s cubic-bezier(0.45, 0.02, 0.2, 1) forwards;
+}
+
+.moon-bonus-transition__text {
+  text-align: center;
+}
+
+.moon-bonus-transition__title {
+  font-size: clamp(1.55rem, 6vw, 2.65rem);
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-indent: 0.22em;
+  line-height: 1.18;
+  color: #e8fbff;
+  text-shadow:
+    0 0 10px rgba(186, 252, 255, 0.95),
+    0 0 28px rgba(56, 214, 255, 0.82),
+    0 0 64px rgba(32, 160, 235, 0.48),
+    0 0 1px rgba(200, 250, 255, 1),
+    0 3px 20px rgba(0, 8, 22, 0.92);
+  margin-bottom: 0.45em;
+}
+
+.moon-bonus-transition__sub {
+  font-size: clamp(0.78rem, 2.85vw, 1.05rem);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-indent: 0.14em;
+  line-height: 1.45;
+  color: rgba(158, 232, 255, 0.98);
+  text-shadow:
+    0 0 12px rgba(56, 214, 255, 0.55),
+    0 0 26px rgba(48, 180, 228, 0.32),
+    0 2px 12px rgba(0, 4, 14, 0.92);
+}
+
+@keyframes moonBonusTransitionShell {
+  0% {
+    opacity: 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  68% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes moonBonusTransitionInner {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(14px);
+  }
+  18% {
+    opacity: 0.72;
+    transform: scale(0.98) translateY(4px);
+  }
+  34% {
+    opacity: 1;
+    transform: scale(1.035) translateY(0);
+  }
+  48% {
+    opacity: 1;
+    transform: scale(1.07) translateY(0);
+  }
+  62% {
+    opacity: 1;
+    transform: scale(1.05) translateY(0);
+  }
+  76% {
+    opacity: 0.88;
+    transform: scale(1.03) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.09) translateY(-10px);
+  }
 }
 
 @keyframes biteSceneShake {
@@ -1397,7 +1528,10 @@ body:not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap)
   width: min(54vw, 300px);
   pointer-events: none;
   z-index: 1;
+  /* Отключён тёмный подводный силуэт в покое (не влияет на #fishSilhouette при клёве) */
+  display: none !important;
   opacity: 0;
+  visibility: hidden;
   transition: opacity 0.85s ease;
 }
 
@@ -2146,9 +2280,9 @@ body.event-snap .lake {
 }
 
 .fish-icon-fallback--panel {
-  width: clamp(52px, 11vw, 60px);
-  height: clamp(52px, 11vw, 60px);
-  font-size: clamp(1.4rem, 5vw, 1.82rem);
+  width: clamp(48px, 10.5vw, 56px);
+  height: clamp(48px, 10.5vw, 56px);
+  font-size: clamp(1.32rem, 5vw, 1.72rem);
 }
 
 .fish-icon-fallback--hist {
@@ -2195,15 +2329,16 @@ body.event-snap .lake {
   padding: 14px;
 }
 
-.panel-left,
 .panel-right {
   max-height: min(70vh, 560px);
   overflow-y: auto;
 }
 
-/* Левая колонка «РЫБЫ»: чуть шире подложка и воздух внутри */
+/* Левая колонка «РЫБЫ»: без внутреннего скролла — весь список виден сразу */
 .panel-left {
-  padding: 15px 16px;
+  padding: 12px 16px;
+  max-height: none;
+  overflow: visible;
 }
 
 .panel h2,
@@ -2215,14 +2350,18 @@ body.event-snap .lake {
   font-weight: 600;
 }
 
+.panel.panel-left > h2 {
+  margin-bottom: 8px;
+}
+
 .fish-row {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  font-size: 0.88rem;
-  padding: 11px 0;
+  font-size: 0.86rem;
+  padding: 7px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  gap: 14px;
+  gap: 11px;
 }
 
 .fish-row:last-child {
@@ -2234,9 +2373,9 @@ body.event-snap .lake {
   min-width: 0;
   padding-inline-end: 6px;
   font-weight: 700;
-  font-size: 0.89rem;
+  font-size: 0.86rem;
   letter-spacing: 0.02em;
-  line-height: 1.28;
+  line-height: 1.22;
   color: rgba(242, 248, 255, 0.96);
 }
 
@@ -2250,8 +2389,8 @@ body.event-snap .lake {
 }
 
 .fish-icon-host--panel {
-  width: clamp(52px, 11vw, 60px);
-  height: clamp(52px, 11vw, 60px);
+  width: clamp(48px, 10.5vw, 56px);
+  height: clamp(48px, 10.5vw, 56px);
 }
 
 .fish-icon-host--hudStatus {
@@ -2361,8 +2500,8 @@ img.fish-line-hud__icon.is-loaded {
 
 /* Левая панель «РЫБЫ»: чуть крупнее иконки, акцент на читаемости */
 .fish-icon--panel {
-  width: clamp(52px, 11vw, 60px);
-  height: clamp(52px, 11vw, 60px);
+  width: clamp(48px, 10.5vw, 56px);
+  height: clamp(48px, 10.5vw, 56px);
   filter:
     brightness(1.14) contrast(1.12) saturate(1.08)
     drop-shadow(0 0 16px rgba(120, 220, 255, 0.48))
@@ -2371,7 +2510,7 @@ img.fish-line-hud__icon.is-loaded {
 
 .fish-meta {
   opacity: 0.97;
-  font-size: 0.84rem;
+  font-size: 0.8rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
@@ -4107,34 +4246,34 @@ button:disabled {
 
 @media (max-width: 480px) {
   .fish-row {
-    font-size: 0.8rem;
-    gap: 11px;
-    padding: 10px 0;
+    font-size: 0.78rem;
+    gap: 9px;
+    padding: 7px 0;
   }
 
   .fish-row__name {
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     padding-inline-end: 5px;
   }
 
   .fish-meta {
-    font-size: 0.76rem;
+    font-size: 0.74rem;
   }
 
   .fish-icon-host--panel {
-    width: clamp(46px, 14.5vw, 54px);
-    height: clamp(46px, 14.5vw, 54px);
+    width: clamp(44px, 14vw, 52px);
+    height: clamp(44px, 14vw, 52px);
   }
 
   .fish-icon--panel {
-    width: clamp(46px, 14.5vw, 54px);
-    height: clamp(46px, 14.5vw, 54px);
+    width: clamp(44px, 14vw, 52px);
+    height: clamp(44px, 14vw, 52px);
   }
 
   .fish-icon-fallback--panel {
-    width: clamp(46px, 14.5vw, 54px);
-    height: clamp(46px, 14.5vw, 54px);
-    font-size: clamp(1.24rem, 5vw, 1.58rem);
+    width: clamp(44px, 14vw, 52px);
+    height: clamp(44px, 14vw, 52px);
+    font-size: clamp(1.15rem, 5vw, 1.5rem);
   }
 
   .hist-item__fish-wrap {
@@ -4276,4 +4415,12 @@ body.is-snap .app {
 @keyframes snapTint {
   0% { filter: brightness(0.92) saturate(1.2); }
   100% { filter: none; }
+}
+
+#fishSilhouette,
+.fish-silhouette,
+.fish-underwater-shape {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
 }
