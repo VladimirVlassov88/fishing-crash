@@ -493,6 +493,19 @@ body.is-reeling .line-fp__path {
   }
 }
 
+/* Покачивание контейнера удочки в покое (хват справа снизу) */
+@keyframes rodIdleFloat {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(-2deg);
+  }
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+}
+
 /* Кэшаут / обрыв — быстро стухает */
 body.is-win .fp-hand,
 body.is-snap .fp-hand {
@@ -1749,6 +1762,12 @@ body.is-reeling .fish-silhouette.visible .fish-underwater-shape {
   opacity: 1;
   transition: opacity 0.55s ease, filter 0.5s ease;
   filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.55));
+}
+
+/* Idle: только без bite / casting / reeling / финала — анимация на контейнере, не на PNG */
+body:not(.is-bite):not(.is-casting):not(.is-reeling):not(.is-win):not(.is-snap) #rodRig {
+  transform-origin: 88% 96%;
+  animation: rodIdleFloat 3.8s ease-in-out infinite;
 }
 
 .fp-rig__svg {
