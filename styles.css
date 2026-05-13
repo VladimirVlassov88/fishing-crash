@@ -1770,7 +1770,7 @@ body.is-reeling .fish-silhouette.visible .fish-underwater-shape {
   object-fit: contain;
   object-position: 82% 96%;
   display: block;
-  transform: scale(1.49) rotate(-20.5deg);
+  transform: scale(1.49) rotate(-27deg);
   transform-origin: 90% 97%;
   pointer-events: none;
   -webkit-user-drag: none;
