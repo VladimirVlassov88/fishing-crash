@@ -350,6 +350,11 @@ body.bite-shake .app {
   pointer-events: none;
 }
 
+/* Кодовая SVG-леска отключена: леска входит в PNG удочки */
+.scene-fp__line {
+  display: none !important;
+}
+
 .scene-fp__rig {
   position: absolute;
   inset: 0;
@@ -408,7 +413,7 @@ body:not(.is-casting):not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap) 
 }
 
 body:not(.is-casting):not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap) .fp-rod.fp-rig {
-  opacity: 0.188;
+  opacity: 1;
   transform: translate3d(0, 0, 0);
 }
 
@@ -423,7 +428,7 @@ body.is-casting:not(.is-bite):not(.is-reeling) .fp-hand {
 }
 
 body.is-casting:not(.is-bite):not(.is-reeling) .fp-rod.fp-rig {
-  opacity: 0.61;
+  opacity: 1;
 }
 
 body.is-casting:not(.is-bite):not(.is-reeling) .line-fp__path {
@@ -437,7 +442,7 @@ body.is-bite .fp-hand {
 }
 
 body.is-bite .fp-rod.fp-rig {
-  opacity: 0.87;
+  opacity: 1;
 }
 
 body.is-bite .line-fp__path {
@@ -451,7 +456,7 @@ body.is-reeling .fp-hand {
 }
 
 body.is-reeling .fp-rod.fp-rig {
-  opacity: 0.985;
+  opacity: 1;
   animation: fpRodMicro 3.85s ease-in-out infinite;
 }
 
@@ -498,7 +503,7 @@ body.is-snap .fp-hand {
 
 body.is-win .fp-rod.fp-rig,
 body.is-snap .fp-rod.fp-rig {
-  opacity: 0.12;
+  opacity: 1;
   animation: none;
   transition: opacity 0.2s ease-out;
 }
@@ -1731,33 +1736,59 @@ body.is-reeling .fish-silhouette.visible .fish-underwater-shape {
 
 /* ---------- FP rig (руки + удочка) ---------- */
 
-/* Якорь из нижнего правого угла: выше дока, левее автокэшаута — без перекрытия UI */
+/* Якорь из нижнего правого: крупнее FP-удочка, кончик/леска в сторону ripple (--lake-entry-x) */
 .fp-rig {
   position: absolute;
   left: auto;
-  right: clamp(208px, 25vw, 336px);
-  bottom: clamp(118px, 17.5vh, 182px);
-  width: min(52vw, 300px);
-  height: min(26vh, 236px);
+  right: clamp(372px, calc(4.5vw + 344px), 448px);
+  bottom: clamp(22px, calc(18.5vh - 106px), 102px);
+  width: min(65vw, 480px);
+  height: min(40vh, 400px);
   pointer-events: none;
   z-index: 2;
-  opacity: 0.188;
+  opacity: 1;
   transition: opacity 0.55s ease, filter 0.5s ease;
-  filter:
-    drop-shadow(0 0 1px rgba(184, 218, 248, 0.55))
-    drop-shadow(0 0 12px rgba(74, 138, 188, 0.34))
-    drop-shadow(0 14px 34px rgba(0, 0, 0, 0.78))
-    brightness(0.96)
-    contrast(1.06)
-    saturate(0.96);
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.55));
 }
 
 .fp-rig__svg {
+  display: none !important;
+}
+
+/* Растровая удочка (idle / натяжение); позже подогнать под композицию */
+.fp-rod-sprite-stack {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fp-rod-sprite {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
+  object-fit: contain;
+  object-position: 82% 96%;
   display: block;
-  transform: scale(0.804);
-  transform-origin: 92% 98%;
+  transform: scale(1.49) rotate(-20.5deg);
+  transform-origin: 90% 97%;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.fp-rod-sprite--tension {
+  display: none;
+}
+
+body.is-bite .fp-rod-sprite--idle,
+body.is-reeling .fp-rod-sprite--idle {
+  display: none;
+}
+
+body.is-bite .fp-rod-sprite--tension,
+body.is-reeling .fp-rod-sprite--tension {
+  display: block;
 }
 
 .rod-assembly {
