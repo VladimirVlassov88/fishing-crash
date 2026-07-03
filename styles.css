@@ -2045,15 +2045,6 @@ body.event-no-catch .waves-b {
   opacity: 0.38;
 }
 
-body.event-no-catch .surface-band {
-  animation: reelInRipple 2.4s ease-in-out infinite;
-}
-
-@keyframes reelInRipple {
-  0%, 100% { transform: translateY(0); opacity: 1; }
-  50% { transform: translateY(1px); opacity: 0.92; }
-}
-
 body.event-small-catch .splash-core {
   animation: splashSmallCatchOnce 0.75s ease-out forwards;
 }
