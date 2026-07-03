@@ -445,6 +445,11 @@ body.is-bite .fp-rod.fp-rig {
   opacity: 1;
 }
 
+body.is-bite .fp-rod-sprite-stack {
+  transform-origin: 88% 96%;
+  animation: rodBiteJerk 360ms cubic-bezier(0.2, 1.15, 0.34, 1) both;
+}
+
 body.is-bite .line-fp__path {
   stroke-opacity: 0.41;
 }
@@ -457,15 +462,19 @@ body.is-reeling .fp-hand {
 
 body.is-reeling .fp-rod.fp-rig {
   opacity: 1;
-  animation: fpRodMicro 3.85s ease-in-out infinite;
+}
+
+body.is-reeling .fp-rod-sprite-stack {
+  transform-origin: 88% 96%;
+  animation: rodFightMotion 1.08s ease-in-out infinite;
 }
 
 body.is-intense .fp-hand {
   animation-duration: 2.05s;
 }
 
-body.is-intense .fp-rod.fp-rig {
-  animation-duration: 2.25s;
+body.is-intense .fp-rod-sprite-stack {
+  animation-duration: 0.86s;
 }
 
 body.is-reeling .line-fp__path {
@@ -506,6 +515,63 @@ body.is-reeling .line-fp__path {
   }
 }
 
+@keyframes rodBiteJerk {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  18% {
+    transform: translate3d(3px, 6px, 0) rotate(2deg);
+  }
+  42% {
+    transform: translate3d(-1px, -2px, 0) rotate(-0.8deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+}
+
+@keyframes rodFightMotion {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  22% {
+    transform: translate3d(1px, 3px, 0) rotate(0.9deg);
+  }
+  50% {
+    transform: translate3d(-1px, -2px, 0) rotate(-0.6deg);
+  }
+  76% {
+    transform: translate3d(2px, 2px, 0) rotate(0.7deg);
+  }
+}
+
+@keyframes rodWinRelax {
+  0% {
+    transform: translate3d(2px, 2px, 0) rotate(0.9deg);
+  }
+  55% {
+    transform: translate3d(-1px, -1px, 0) rotate(-0.4deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+}
+
+@keyframes rodSnapBack {
+  0% {
+    transform: translate3d(2px, 5px, 0) rotate(2deg);
+  }
+  24% {
+    transform: translate3d(-4px, -6px, 0) rotate(-2.3deg);
+  }
+  58% {
+    transform: translate3d(2px, 2px, 0) rotate(0.8deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+}
+
 /* Кэшаут / обрыв — быстро стухает */
 body.is-win .fp-hand,
 body.is-snap .fp-hand {
@@ -514,11 +580,24 @@ body.is-snap .fp-hand {
   transition: opacity 0.2s ease-out;
 }
 
-body.is-win .fp-rod.fp-rig,
+body.is-win .fp-rod.fp-rig {
+  opacity: 1;
+  transition: opacity 0.2s ease-out;
+}
+
+body.is-win .fp-rod-sprite-stack {
+  transform-origin: 88% 96%;
+  animation: rodWinRelax 560ms cubic-bezier(0.22, 0.8, 0.28, 1) both;
+}
+
 body.is-snap .fp-rod.fp-rig {
   opacity: 1;
-  animation: none;
   transition: opacity 0.2s ease-out;
+}
+
+body.is-snap .fp-rod-sprite-stack {
+  transform-origin: 88% 96%;
+  animation: rodSnapBack 420ms cubic-bezier(0.18, 0.92, 0.24, 1) both;
 }
 
 body.is-win .line-fp__path,
@@ -1764,7 +1843,7 @@ body.is-reeling .fish-silhouette.visible .fish-underwater-shape {
 .fp-rig {
   position: absolute;
   left: auto;
-  right: clamp(372px, calc(4.5vw + 344px), 448px);
+  right: calc(clamp(372px, calc(4.5vw + 344px), 448px) - 60px);
   bottom: clamp(22px, calc(18.5vh - 106px), 102px);
   width: min(65vw, 480px);
   height: min(40vh, 400px);
