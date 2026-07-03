@@ -753,11 +753,6 @@
     return pool[pool.length - 1];
   }
 
-  /** Случайная рыба в дневном пуле (совместимость) */
-  function pickFish() {
-    return pickFishFromPool(dayFishPool);
-  }
-
   /** @param {string} id */
   function findFishTypeById(id) {
     for (var i = 0; i < fishTypes.length; i++) {
