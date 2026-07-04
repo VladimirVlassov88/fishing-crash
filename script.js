@@ -339,6 +339,7 @@
     histToggle: document.getElementById("histToggle"),
     btnCast: document.getElementById("btnCast"),
     btnCash: document.getElementById("btnCash"),
+    btnActionLabel: document.getElementById("btnActionLabel"),
     betMinus: document.getElementById("betMinus"),
     betPlus: document.getElementById("betPlus"),
     betPresets: document.getElementById("betPresets"),
@@ -351,6 +352,7 @@
     flashRed: document.getElementById("flashRed"),
     flashSoftCyan: document.getElementById("flashSoftCyan"),
     flashBite: document.getElementById("flashBite"),
+    effectsCanvas: document.getElementById("effectsCanvas"),
     biteCallout: document.getElementById("biteCallout"),
     bigWinCallout: document.getElementById("bigWinCallout"),
     bigWinCalloutText: document.getElementById("bigWinCalloutText"),
@@ -373,7 +375,25 @@
     nightBonusStat: document.getElementById("nightBonusStat"),
     nightBonusCastsDisplay: document.getElementById("nightBonusCastsDisplay"),
     moonBonusTransition: document.getElementById("moonBonusTransition"),
+    nightHuntOverlay: document.getElementById("nightHuntOverlay"),
   };
+
+  const ENABLE_CANVAS_BITE_SPLASH = true;
+
+  let effectsCtx = null;
+  try {
+    effectsCtx = els.effectsCanvas ? els.effectsCanvas.getContext("2d") : null;
+  } catch (e) {
+    effectsCtx = null;
+  }
+
+  const canvasParticles = [];
+  const canvasRings = [];
+  let effectsRafId = 0;
+  let effectsLastTs = 0;
+  let effectsCanvasCssW = 0;
+  let effectsCanvasCssH = 0;
+  let effectsCanvasDpr = 1;
 
   let balance = START_BALANCE;
   let bet = 500;
@@ -669,6 +689,7 @@
 
   /** Длительность совпадает с CSS `.moon-bonus-transition.is-animating` (2.2s ≈ 1800–2500ms) */
   const MOON_BONUS_TRANSITION_MS = 2200;
+  const NIGHT_HUNT_OVERLAY_MS = 2700;
   /** Переключение основного фона на ночной — в середине плавного появления оверлея */
   const MOON_BONUS_BG_SWITCH_MS = 360;
   /** После окончания надписи ночного бонуса — до старта роста множителя (reeling / «краш-индикатор»), 500–800ms */
@@ -710,6 +731,25 @@
         document.body.classList.add("is-night-bonus");
       }
     }, MOON_BONUS_TRANSITION_MS);
+  }
+
+  function showNightHuntOverlay() {
+    var el = els.nightHuntOverlay;
+    if (!el) return;
+    if (showNightHuntOverlay.hideTimer) {
+      window.clearTimeout(showNightHuntOverlay.hideTimer);
+    }
+    el.hidden = false;
+    el.setAttribute("aria-hidden", "false");
+    el.classList.remove("is-showing");
+    void el.offsetWidth;
+    el.classList.add("is-showing");
+    showNightHuntOverlay.hideTimer = window.setTimeout(function () {
+      el.classList.remove("is-showing");
+      el.hidden = true;
+      el.setAttribute("aria-hidden", "true");
+      showNightHuntOverlay.hideTimer = 0;
+    }, NIGHT_HUNT_OVERLAY_MS);
   }
 
   function refreshMoneyUI() {
@@ -1179,6 +1219,10 @@
     }
 
     if (els.lineWrap) els.lineWrap.classList.toggle("shake", reeling);
+    els.btnCast.classList.toggle(
+      "pulse-high",
+      reeling && currentFish && currentMultiplier > currentFish.startMultiplier * 1.12
+    );
     els.btnCash.classList.toggle(
       "pulse-high",
       reeling && currentFish && currentMultiplier > currentFish.startMultiplier * 1.12
@@ -1214,6 +1258,155 @@
     }, ms);
   }
 
+  function resizeEffectsCanvas() {
+    if (!els.effectsCanvas || !effectsCtx) return false;
+    var rect = els.effectsCanvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return false;
+
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    var w = Math.max(1, Math.round(rect.width * dpr));
+    var h = Math.max(1, Math.round(rect.height * dpr));
+    if (els.effectsCanvas.width !== w || els.effectsCanvas.height !== h) {
+      els.effectsCanvas.width = w;
+      els.effectsCanvas.height = h;
+    }
+    effectsCanvasDpr = dpr;
+    effectsCanvasCssW = rect.width;
+    effectsCanvasCssH = rect.height;
+    effectsCtx.setTransform(effectsCanvasDpr, 0, 0, effectsCanvasDpr, 0, 0);
+    return true;
+  }
+
+  function drawCanvasEffects(ts) {
+    if (!effectsCtx || !resizeEffectsCanvas()) {
+      effectsRafId = 0;
+      return;
+    }
+
+    var dtMs = effectsLastTs ? Math.min(40, ts - effectsLastTs) : 16.7;
+    var dt = dtMs / 1000;
+    effectsLastTs = ts;
+
+    effectsCtx.clearRect(0, 0, effectsCanvasCssW, effectsCanvasCssH);
+    effectsCtx.save();
+    effectsCtx.globalCompositeOperation = "lighter";
+
+    for (var r = canvasRings.length - 1; r >= 0; r--) {
+      var ring = canvasRings[r];
+      ring.life += dtMs;
+      var rp = Math.min(1, ring.life / ring.maxLife);
+      if (rp >= 1) {
+        canvasRings.splice(r, 1);
+        continue;
+      }
+
+      effectsCtx.beginPath();
+      effectsCtx.ellipse(
+        ring.x,
+        ring.y,
+        ring.rx + ring.growX * rp,
+        ring.ry + ring.growY * rp,
+        ring.rot,
+        0,
+        Math.PI * 2
+      );
+      effectsCtx.strokeStyle = "rgba(180, 245, 255, " + (0.55 * (1 - rp)).toFixed(3) + ")";
+      effectsCtx.lineWidth = ring.lineWidth;
+      effectsCtx.stroke();
+    }
+
+    for (var i = canvasParticles.length - 1; i >= 0; i--) {
+      var p = canvasParticles[i];
+      p.life += dtMs;
+      if (p.life >= p.maxLife) {
+        canvasParticles.splice(i, 1);
+        continue;
+      }
+
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += p.gravity * dt;
+
+      var fade = 1 - p.life / p.maxLife;
+      effectsCtx.beginPath();
+      effectsCtx.moveTo(p.x, p.y);
+      effectsCtx.lineTo(p.x - p.vx * 0.018, p.y - p.vy * 0.018);
+      effectsCtx.strokeStyle =
+        "rgba(" + p.r + ", " + p.g + ", " + p.b + ", " + (fade * 0.88).toFixed(3) + ")";
+      effectsCtx.lineWidth = p.size;
+      effectsCtx.lineCap = "round";
+      effectsCtx.stroke();
+    }
+
+    effectsCtx.restore();
+
+    if (canvasParticles.length || canvasRings.length) {
+      effectsRafId = window.requestAnimationFrame(drawCanvasEffects);
+    } else {
+      effectsCtx.clearRect(0, 0, effectsCanvasCssW, effectsCanvasCssH);
+      effectsRafId = 0;
+      effectsLastTs = 0;
+    }
+  }
+
+  function ensureCanvasEffectsLoop() {
+    if (!effectsCtx || effectsRafId) return;
+    effectsLastTs = 0;
+    effectsRafId = window.requestAnimationFrame(drawCanvasEffects);
+  }
+
+  function spawnBiteSplashCanvas() {
+    if (!ENABLE_CANVAS_BITE_SPLASH || !els.effectsCanvas || !effectsCtx) return;
+    if (!resizeEffectsCanvas()) return;
+
+    var source = document.querySelector(".moving-ripple-point") || els.biteSplash;
+    if (!source) return;
+
+    var sourceRect = source.getBoundingClientRect();
+    var canvasRect = els.effectsCanvas.getBoundingClientRect();
+    var x = sourceRect.left + sourceRect.width / 2 - canvasRect.left;
+    var y = sourceRect.top + sourceRect.height / 2 - canvasRect.top;
+
+    var count = 46 + Math.floor(Math.random() * 12);
+    for (var i = 0; i < count; i++) {
+      var highDrop = i < count * 0.68;
+      canvasParticles.push({
+        x: x + (Math.random() - 0.5) * 10,
+        y: y + (Math.random() - 0.5) * 6,
+        vx: (Math.random() - 0.5) * (highDrop ? 260 : 360),
+        vy: highDrop ? -(150 + Math.random() * 230) : -(45 + Math.random() * 125),
+        gravity: 560 + Math.random() * 260,
+        life: 0,
+        maxLife: 420 + Math.random() * 360,
+        size: 1 + Math.random() * 2.2,
+        r: Math.random() > 0.28 ? 235 : 120,
+        g: Math.random() > 0.28 ? 255 : 225,
+        b: 255,
+      });
+    }
+
+    for (var ringIndex = 0; ringIndex < 2; ringIndex++) {
+      canvasRings.push({
+        x: x,
+        y: y + ringIndex * 2,
+        rx: 8 + ringIndex * 5,
+        ry: 4 + ringIndex * 3,
+        growX: 70 + ringIndex * 28,
+        growY: 26 + ringIndex * 12,
+        rot: (Math.random() - 0.5) * 0.12,
+        lineWidth: 1.4 - ringIndex * 0.15,
+        life: 0,
+        maxLife: 360 + ringIndex * 140,
+      });
+    }
+
+    ensureCanvasEffectsLoop();
+  }
+
+  if (effectsCtx) {
+    window.addEventListener("resize", resizeEffectsCanvas);
+  }
+
   /** Всплеск на воде + «КЛЁВ!» только при outcome fish → фаза bite (вызывается один раз). */
   function triggerBiteSplashEffects() {
     document.body.classList.remove("bite-shake");
@@ -1246,6 +1439,7 @@
         els.biteSplash.setAttribute("aria-hidden", "true");
       }, BITE_SPLASH_ANIM_MS + 90);
     }
+    spawnBiteSplashCanvas();
     if (els.biteCallout) {
       els.biteCallout.classList.remove("bite-callout--burst");
       void els.biteCallout.offsetWidth;
@@ -1394,9 +1588,19 @@
   function syncButtons() {
     const idle = phase === "idle";
     const reeling = phase === "reeling";
+    const waiting = phase === "casting" || phase === "bite";
 
-    els.btnCast.disabled = !idle;
+    els.btnCast.disabled = !(idle || reeling);
     els.btnCash.disabled = !reeling;
+    els.btnCast.classList.toggle("is-cashout", reeling);
+    els.btnCast.classList.toggle("is-waiting", waiting);
+    if (els.btnActionLabel) {
+      els.btnActionLabel.textContent = reeling ? "В САДОК" : waiting ? "ЖДЁМ" : "ЗАБРОС";
+    }
+    els.btnCast.setAttribute(
+      "aria-label",
+      reeling ? "Забрать улов в садок" : idle ? "Сделать заброс" : "Ожидание результата"
+    );
 
     els.betMinus.disabled = !idle;
     els.betPlus.disabled = !idle;
@@ -1478,6 +1682,7 @@
     els.fishSilhouette.classList.remove("visible");
     if (els.lineWrap) els.lineWrap.classList.remove("shake", "snap", "line-fp--taut");
     if (els.waterZone) els.waterZone.classList.remove("resistance-intense", "risk-shake");
+    els.btnCast.classList.remove("pulse-high");
     els.btnCash.classList.remove("pulse-high");
     if (els.rodRig) {
       els.rodRig.classList.remove(
@@ -1615,6 +1820,7 @@
     if (els.fishSilhouette) els.fishSilhouette.classList.remove("visible");
     if (els.lineWrap) els.lineWrap.classList.remove("shake");
     if (els.waterZone) els.waterZone.classList.remove("resistance-intense", "risk-shake");
+    els.btnCast.classList.remove("pulse-high");
     els.btnCash.classList.remove("pulse-high");
 
     if (els.rodRig) {
@@ -1795,6 +2001,7 @@
       if (currentFish.id === "moon_carp") {
         var alreadyInNightBonus = nightBonusCastsRemaining > 0;
         nightBonusCastsRemaining += NIGHT_BONUS_CASTS_GRANT;
+        showNightHuntOverlay();
         if (alreadyInNightBonus) {
           syncNightBonusUI();
           playMoonBonusTransition(true);
@@ -1856,7 +2063,13 @@
     refreshMoneyUI();
   });
 
-  els.btnCast.addEventListener("click", cast);
+  els.btnCast.addEventListener("click", function () {
+    if (phase === "reeling") {
+      cashOut();
+      return;
+    }
+    cast();
+  });
   els.btnCash.addEventListener("click", cashOut);
 
   if (els.autoCashoutToggle) {

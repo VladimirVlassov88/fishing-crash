@@ -163,7 +163,7 @@ body.bite-shake .app {
 .moon-bonus-transition__inner {
   position: relative;
   z-index: 1;
-  display: flex;
+  display: none;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -172,7 +172,7 @@ body.bite-shake .app {
 }
 
 .moon-bonus-transition.is-animating .moon-bonus-transition__inner {
-  animation: moonBonusTransitionInner 2.2s cubic-bezier(0.45, 0.02, 0.2, 1) forwards;
+  animation: none;
 }
 
 .moon-bonus-transition__text {
@@ -223,34 +223,110 @@ body.bite-shake .app {
   }
 }
 
-@keyframes moonBonusTransitionInner {
+.night-hunt-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 48;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(18px, 5vw, 44px);
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.night-hunt-overlay[hidden] {
+  display: none !important;
+}
+
+.night-hunt-overlay.is-showing {
+  visibility: visible;
+  animation: nightHuntOverlayShell 2.7s ease forwards;
+}
+
+.night-hunt-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 66% 44% at 50% 48%, rgba(50, 190, 255, 0.24), transparent 62%),
+    linear-gradient(180deg, rgba(0, 8, 22, 0.26), rgba(0, 4, 14, 0.42));
+}
+
+.night-hunt-overlay__banner {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: min(88vw, 640px);
+  max-height: min(62vh, 430px);
+  object-fit: contain;
+  filter:
+    drop-shadow(0 0 22px rgba(56, 214, 255, 0.45))
+    drop-shadow(0 18px 34px rgba(0, 4, 16, 0.72));
+  transform-origin: center center;
+  will-change: opacity, transform, filter;
+}
+
+.night-hunt-overlay.is-showing .night-hunt-overlay__banner {
+  animation: nightHuntBannerIn 2.7s cubic-bezier(0.18, 0.95, 0.22, 1) forwards;
+}
+
+@keyframes nightHuntOverlayShell {
+  0%,
+  100% { opacity: 0; }
+  10%,
+  70% { opacity: 1; }
+}
+
+@keyframes nightHuntBannerIn {
   0% {
     opacity: 0;
-    transform: scale(0.92) translateY(14px);
+    transform: scale(0.82);
+    filter:
+      blur(2px)
+      drop-shadow(0 0 18px rgba(56, 214, 255, 0.38))
+      drop-shadow(0 18px 34px rgba(0, 4, 16, 0.72));
   }
-  18% {
-    opacity: 0.72;
-    transform: scale(0.98) translateY(4px);
-  }
-  34% {
+  14% {
     opacity: 1;
-    transform: scale(1.035) translateY(0);
+    transform: scale(1.12);
+    filter:
+      blur(0)
+      drop-shadow(0 0 34px rgba(90, 224, 255, 0.7))
+      drop-shadow(0 22px 38px rgba(0, 4, 16, 0.76));
   }
   48% {
     opacity: 1;
-    transform: scale(1.07) translateY(0);
+    transform: scale(1.12);
+    filter:
+      drop-shadow(0 0 30px rgba(90, 224, 255, 0.62))
+      drop-shadow(0 20px 36px rgba(0, 4, 16, 0.74));
   }
-  62% {
-    opacity: 1;
-    transform: scale(1.05) translateY(0);
-  }
-  76% {
-    opacity: 0.88;
-    transform: scale(1.03) translateY(0);
+  74% {
+    opacity: 0.72;
+    transform: scale(1.17);
+    filter:
+      blur(1px)
+      drop-shadow(0 0 26px rgba(90, 224, 255, 0.48))
+      drop-shadow(0 20px 36px rgba(0, 4, 16, 0.7));
   }
   100% {
     opacity: 0;
-    transform: scale(1.09) translateY(-10px);
+    transform: scale(1.22);
+    filter:
+      blur(5px)
+      drop-shadow(0 0 18px rgba(90, 224, 255, 0.18))
+      drop-shadow(0 20px 36px rgba(0, 4, 16, 0.52));
+  }
+}
+
+@media (max-width: 480px) {
+  .night-hunt-overlay {
+    padding: 18px;
+  }
+
+  .night-hunt-overlay__banner {
+    width: min(94vw, 420px);
+    max-height: 52vh;
   }
 }
 
@@ -333,7 +409,7 @@ body.bite-shake .app {
   display: none !important;
 }
 
-/* FP overlay: первое лицо — .fp-line / .fp-hand / .fp-rod (ниже .app --z-app) */
+/* FP overlay: первое лицо — .fp-line / .fp-rod (ниже .app --z-app) */
 .fp-rod-layer.scene-fp {
   position: fixed;
   inset: 0;
@@ -362,56 +438,7 @@ body.bite-shake .app {
   pointer-events: none;
 }
 
-/* ---------- FP hand (заготовка композиции; заменить на финальный ассет) ---------- */
-
-.fp-hand {
-  position: absolute;
-  left: auto;
-  right: clamp(196px, 23.5vw, 318px);
-  bottom: clamp(108px, 16.5vh, 170px);
-  width: min(36vw, 158px);
-  height: min(20vh, 132px);
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0;
-  transition: opacity 0.42s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-  filter:
-    drop-shadow(0 14px 26px rgba(0, 0, 0, 0.62))
-    brightness(0.9)
-    saturate(0.85);
-}
-
-.fp-hand__silhouette {
-  position: absolute;
-  right: -5%;
-  bottom: -14%;
-  width: 80%;
-  height: 64%;
-  border-radius: 52% 48% 48% 52%;
-  background:
-    radial-gradient(ellipse 92% 86% at 40% 36%, rgba(118, 96, 82, 0.42) 0%, transparent 58%),
-    radial-gradient(ellipse 74% 76% at 70% 54%, rgba(62, 48, 40, 0.52) 0%, rgba(22, 17, 14, 0.78) 100%);
-  transform: rotate(-11deg);
-}
-
-.fp-hand__grip {
-  position: absolute;
-  right: 16%;
-  bottom: 6%;
-  width: 44%;
-  height: 30%;
-  border-radius: 42%;
-  background: linear-gradient(148deg, rgba(48, 38, 32, 0.48), rgba(18, 14, 11, 0.72));
-  transform: rotate(-17deg);
-  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.05);
-}
-
-/* Idle: рука скрыта, удочка едва заметна */
-body:not(.is-casting):not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap) .fp-hand {
-  opacity: 0;
-  transform: translate3d(6px, 8px, 0);
-}
-
+/* Idle: удочка едва заметна */
 body:not(.is-casting):not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap) .fp-rod.fp-rig {
   opacity: 1;
   transform: translate3d(0, 0, 0);
@@ -422,11 +449,6 @@ body:not(.is-casting):not(.is-bite):not(.is-reeling):not(.is-win):not(.is-snap) 
 }
 
 /* Заброс / ожидание */
-body.is-casting:not(.is-bite):not(.is-reeling) .fp-hand {
-  opacity: 0.36;
-  transform: translate3d(0, 0, 0);
-}
-
 body.is-casting:not(.is-bite):not(.is-reeling) .fp-rod.fp-rig {
   opacity: 1;
 }
@@ -436,11 +458,6 @@ body.is-casting:not(.is-bite):not(.is-reeling) .line-fp__path {
 }
 
 /* Клёв */
-body.is-bite .fp-hand {
-  opacity: 0.54;
-  animation: fpHandMicro 3.35s ease-in-out infinite;
-}
-
 body.is-bite .fp-rod.fp-rig {
   opacity: 1;
 }
@@ -455,11 +472,6 @@ body.is-bite .line-fp__path {
 }
 
 /* Вываживание */
-body.is-reeling .fp-hand {
-  opacity: 0.64;
-  animation: fpHandMicro 2.85s ease-in-out infinite;
-}
-
 body.is-reeling .fp-rod.fp-rig {
   opacity: 1;
 }
@@ -469,25 +481,12 @@ body.is-reeling .fp-rod-sprite-stack {
   animation: rodFightMotion 1.08s ease-in-out infinite;
 }
 
-body.is-intense .fp-hand {
-  animation-duration: 2.05s;
-}
-
 body.is-intense .fp-rod-sprite-stack {
   animation-duration: 0.86s;
 }
 
 body.is-reeling .line-fp__path {
   stroke-opacity: 0.48;
-}
-
-@keyframes fpHandMicro {
-  0%, 100% {
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    transform: translate3d(-0.7px, 0.4px, 0);
-  }
 }
 
 @keyframes fpRodMicro {
@@ -573,13 +572,6 @@ body.is-reeling .line-fp__path {
 }
 
 /* Кэшаут / обрыв — быстро стухает */
-body.is-win .fp-hand,
-body.is-snap .fp-hand {
-  opacity: 0.06;
-  animation: none;
-  transition: opacity 0.2s ease-out;
-}
-
 body.is-win .fp-rod.fp-rig {
   opacity: 1;
   transition: opacity 0.2s ease-out;
@@ -700,45 +692,6 @@ body.is-snap .line-fp__path {
   bottom: clamp(40px, 5.5vh, 70px);
   height: 38%;
   pointer-events: none;
-}
-
-.scene-underwater-bg {
-  display: none;
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 72%;
-  max-height: 34vh;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.3;
-  background-image: url("./assets/backgrounds/bg_underwater.png");
-  background-position: center bottom;
-  background-size: cover;
-  background-repeat: no-repeat;
-  /* Мягкое растворение верхней границы в основной фон (альфа-маска сверху вниз) */
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(0, 0, 0, 0.2) 16%,
-    rgba(0, 0, 0, 0.62) 36%,
-    rgba(0, 0, 0, 0.95) 52%,
-    #000 100%
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(0, 0, 0, 0.2) 16%,
-    rgba(0, 0, 0, 0.62) 36%,
-    rgba(0, 0, 0, 0.95) 52%,
-    #000 100%
-  );
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
 }
 
 .effects-canvas {
@@ -2216,7 +2169,7 @@ body.event-intense .hud-status {
     0 1px 14px rgba(0, 6, 18, 0.8);
 }
 
-body.event-intense .btn-pill.btn-cash.pulse-high {
+body.event-intense .btn-pill.btn-cast.pulse-high {
   animation: btnPulseIntense 0.45s ease-in-out infinite;
 }
 
@@ -4327,35 +4280,45 @@ button:disabled {
   text-shadow: 0 0 14px var(--gold-glow);
 }
 
-.btn-pill.btn-cast,
-.btn-pill.btn-cash {
+.btn-pill.btn-cast {
   min-width: 0;
-  width: 100%;
-  min-height: 56px;
-  padding: 18px 32px;
-  font-size: 0.98rem;
+  width: min(74vw, 280px);
+  min-height: 78px;
+  padding: 22px 44px;
+  font-size: 1.12rem;
   font-weight: 800;
-  letter-spacing: 0.13em;
+  letter-spacing: 0.16em;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 14px;
   position: relative;
   z-index: 1;
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: 999px 900px 980px 860px / 860px 999px 850px 960px;
   border-width: 2px;
   border-style: solid;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+  transform-origin: center center;
+  transition:
+    transform 0.16s ease,
+    filter 0.24s ease,
+    box-shadow 0.24s ease,
+    background 0.24s ease,
+    border-color 0.24s ease;
 }
 
 .btn-pill.btn-cast {
   color: #031018;
-  background: linear-gradient(175deg, #5ae8ff 0%, var(--neon-deep) 52%, #0c5f82 100%);
+  background:
+    radial-gradient(circle at 28% 18%, rgba(255, 255, 255, 0.58), transparent 28%),
+    linear-gradient(175deg, #5ae8ff 0%, var(--neon-deep) 52%, #0c5f82 100%);
   border-color: rgba(190, 248, 255, 0.72);
   box-shadow:
-    0 12px 40px var(--neon-soft),
-    inset 0 2px 0 rgba(255, 255, 255, 0.38);
+    0 16px 48px rgba(56, 214, 255, 0.46),
+    0 0 0 1px rgba(190, 248, 255, 0.2),
+    inset 0 2px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -10px 22px rgba(0, 32, 54, 0.22);
 }
 
 .btn-pill.btn-cast::after {
@@ -4367,17 +4330,37 @@ button:disabled {
   animation: btnSheen 4s ease-in-out infinite;
 }
 
-.btn-pill.btn-cash {
+.btn-pill.btn-cast.is-cashout {
   color: #1f1404;
-  background: linear-gradient(175deg, var(--gold-hot) 0%, #e8b92e 48%, #a87316 100%);
+  background:
+    radial-gradient(circle at 28% 18%, rgba(255, 255, 255, 0.62), transparent 28%),
+    linear-gradient(175deg, var(--gold-hot) 0%, #e8b92e 48%, #a87316 100%);
   border-color: rgba(255, 244, 200, 0.82);
   box-shadow:
-    0 12px 42px var(--gold-glow),
-    inset 0 2px 0 rgba(255, 255, 255, 0.48);
+    0 18px 54px rgba(238, 207, 82, 0.72),
+    0 0 0 1px rgba(255, 244, 200, 0.26),
+    inset 0 2px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -10px 22px rgba(120, 72, 8, 0.18);
 }
 
-.btn-pill.btn-cash.pulse-high {
+.btn-pill.btn-cast.is-waiting {
+  filter: saturate(0.74) brightness(0.82);
+}
+
+.btn-pill.btn-cast:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.015);
+}
+
+.btn-pill.btn-cast:active:not(:disabled) {
+  transform: translateY(1px) scale(0.985);
+}
+
+.btn-pill.btn-cast.pulse-high {
   animation: btnPulse 0.62s ease-in-out infinite;
+}
+
+.btn-pill.btn-cash {
+  display: none !important;
 }
 
 @keyframes btnSheen {
@@ -4396,7 +4379,8 @@ button:disabled {
   box-shadow: inset 0 0 0 1px rgba(0, 40, 60, 0.35);
 }
 
-.btn-cash__icon {
+.btn-cash__icon,
+.btn-pill.btn-cast.is-cashout .btn-cast__icon {
   width: 24px;
   height: 24px;
   border-radius: 999px;
@@ -4448,22 +4432,20 @@ button:disabled {
   .action-block {
     flex-direction: row;
     align-items: stretch;
-    min-width: min(62vw, 420px);
+    min-width: min(54vw, 320px);
+    justify-content: center;
   }
 
   .action-block.action-block--primary {
-    gap: 16px;
+    gap: 0;
     padding: 4px 6px;
   }
 
-  .btn-pill.btn-cast,
-  .btn-pill.btn-cash {
-    width: auto;
-    flex: 1;
-    flex-basis: 0;
-    min-height: 58px;
-    padding: 19px 36px;
-    font-size: 1rem;
+  .btn-pill.btn-cast {
+    width: min(30vw, 300px);
+    min-height: 82px;
+    padding: 23px 46px;
+    font-size: 1.08rem;
   }
 }
 
@@ -4525,9 +4507,10 @@ button:disabled {
   .action-block {
     min-width: 0;
     width: 100%;
-    max-width: 400px;
+    max-width: 440px;
     margin-left: auto;
     margin-right: auto;
+    justify-content: center;
   }
 
   .dock-bet,

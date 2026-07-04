@@ -32,7 +32,6 @@
     </div>
 
     <div class="lake">
-      <div class="scene-underwater-bg" aria-hidden="true"></div>
       <div class="moon-track">
         <div class="moon-reflection"></div>
       </div>
@@ -167,6 +166,16 @@
         <p class="moon-bonus-transition__sub"></p>
       </div>
     </div>
+  </div>
+
+  <div class="night-hunt-overlay" id="nightHuntOverlay" hidden aria-hidden="true">
+    <div class="night-hunt-overlay__backdrop" aria-hidden="true"></div>
+    <img
+      class="night-hunt-overlay__banner"
+      src="assets/ui/night_hunt_activated.png"
+      alt=""
+      decoding="async"
+    />
   </div>
 
   <div class="app">
@@ -420,7 +429,7 @@
         <div class="action-block action-block--primary">
           <button type="button" class="btn-pill btn-cast" id="btnCast">
             <span class="btn-cast__icon" aria-hidden="true"></span>
-            ЗАБРОС
+            <span class="btn-action__label" id="btnActionLabel">ЗАБРОС</span>
           </button>
           <button type="button" class="btn-pill btn-cash" id="btnCash" disabled>
             <span class="btn-cash__icon" aria-hidden="true"></span>
