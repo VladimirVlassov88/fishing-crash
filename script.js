@@ -8,29 +8,29 @@
 
   /** Единые пути к исходным PNG (preload + canvas; в UI не подставляются). */
   const fishImages = {
-    malek: "./assets/fish/fish_malek.png",
-    karas: "./assets/fish/fish_karas.png",
-    okun: "./assets/fish/fish_okun.png",
-    shuka: "./assets/fish/fish_shuka.png",
-    som: "./assets/fish/fish_som.png",
-    gold: "./assets/fish/fish_gold.png",
-    moon_carp: "./assets/fish/moon_carp.png",
-    zander: "./assets/fish/zander.png",
+    malek: "./assets/fish/fish_sardine.png",
+    mackerel: "./assets/fish/fish_mackerel.png",
+    seaBass: "./assets/fish/fish_sea_bass.png",
+    dorado: "./assets/fish/fish_dorado.png",
+    barracuda: "./assets/fish/fish_barracuda.png",
+    tuna: "./assets/fish/fish_tuna.png",
+    moonfin: "./assets/fish/fish_moonfin.png",
+    goldenMarlin: "./assets/fish/fish_golden_marlin.png",
   };
 
-  /** Игровой id рыбы или "malek" → ключ fishImages / cleanedFishImages */
+  /** Игровой id рыбы или "malek" (мелкий улов — Сардина) → ключ fishImages / cleanedFishImages */
   const GAME_ID_TO_IMAGE_KEY = {
     malek: "malek",
-    crucian: "karas",
-    perch: "okun",
-    pike: "shuka",
-    catfish: "som",
-    goldfish: "gold",
-    moon_carp: "moon_carp",
-    zander: "zander",
+    mackerel: "mackerel",
+    seaBass: "seaBass",
+    dorado: "dorado",
+    barracuda: "barracuda",
+    tuna: "tuna",
+    moonfin: "moonfin",
+    goldenMarlin: "goldenMarlin",
   };
 
-  /** Кэш data URL после removeWhiteBackground (ключи malek, karas, …). Только они попадают в UI. */
+  /** Кэш data URL после removeWhiteBackground (ключи malek, mackerel, …). Только они попадают в UI. */
   const cleanedFishImages = {};
 
   /** Пороги canvas: >230 по всем каналам → alpha 0; >210 — мягкое снижение alpha до края 230. */
@@ -269,15 +269,15 @@
 
   /** Панель «Рыбы» и pickFishFromPool(): доли внутри выбранного пула */
   const fishTypes = [
-    { id: "crucian", name: "Карась", chance: 31, startMultiplier: 1.2, color: "green" },
-    { id: "perch", name: "Окунь", chance: 30, startMultiplier: 2, color: "blue" },
-    { id: "zander", name: "Судак", chance: 18, startMultiplier: 3, color: "teal" },
-    { id: "pike", name: "Щука", chance: 12, startMultiplier: 3.5, color: "purple" },
-    { id: "catfish", name: "Сом", chance: 6, startMultiplier: 6, color: "orange" },
-    { id: "goldfish", name: "Золотая рыба", chance: 2, startMultiplier: 10, color: "gold" },
+    { id: "mackerel", name: "Скумбрия", chance: 31, startMultiplier: 1.2, color: "green" },
+    { id: "seaBass", name: "Морской окунь", chance: 30, startMultiplier: 2, color: "blue" },
+    { id: "dorado", name: "Дорадо", chance: 18, startMultiplier: 3, color: "teal" },
+    { id: "barracuda", name: "Барракуда", chance: 12, startMultiplier: 3.5, color: "purple" },
+    { id: "tuna", name: "Тунец", chance: 6, startMultiplier: 6, color: "orange" },
+    { id: "goldenMarlin", name: "Золотой Марлин", chance: 2, startMultiplier: 10, color: "gold" },
     {
-      id: "moon_carp",
-      name: "Лунный карп",
+      id: "moonfin",
+      name: "Лунноплав",
       chance: 1,
       startMultiplier: 5,
       color: "violet",
@@ -291,11 +291,11 @@
   /** Пул рыбы только в бонусной ночи (без карася, окуня; малёк — отдельный outcome и здесь отсутствует) */
   const nightBonusFishPool = fishTypes.filter(function (f) {
     return (
-      f.id === "zander" ||
-      f.id === "pike" ||
-      f.id === "catfish" ||
-      f.id === "goldfish" ||
-      f.id === "moon_carp"
+      f.id === "dorado" ||
+      f.id === "barracuda" ||
+      f.id === "tuna" ||
+      f.id === "goldenMarlin" ||
+      f.id === "moonfin"
     );
   });
 
@@ -884,7 +884,7 @@
         break;
       case "smallCatch":
         els.statusText.textContent =
-          "Малёк. Возврат " + formatMoney(currentWin()) + " ₸";
+          "Сардина. Возврат " + formatMoney(currentWin()) + " ₸";
         break;
       case "bite":
         els.statusText.textContent = "";
@@ -1028,13 +1028,13 @@
     var sm = currentFish.startMultiplier;
     /** Вертикаль: множитель vs косметический диапазон по виду рыбы (не crashPoint). */
     var chartDenomByFish = {
-      crucian: 6.2,
-      perch: 6.45,
-      zander: 6.6,
-      pike: 6.75,
-      catfish: 7.05,
-      moon_carp: 7.2,
-      goldfish: 7.35,
+      mackerel: 6.2,
+      seaBass: 6.45,
+      dorado: 6.6,
+      barracuda: 6.75,
+      tuna: 7.05,
+      moonfin: 7.2,
+      goldenMarlin: 7.35,
     };
     var visSpan = Math.max(sm * (chartDenomByFish[currentFish.id] || 6.5), 2.85);
 
@@ -1972,7 +1972,7 @@
         if (els.flashSoftCyan) flash(els.flashSoftCyan, 260);
         pushHistory(
           {
-            label: "Малёк",
+            label: "Сардина",
             mult: "×" + currentMultiplier.toFixed(2),
             amount: "+" + formatMoney(smallWin) + " ₸",
           },
@@ -1994,11 +1994,11 @@
 
       var fishPool = castBeganWithNightBonusFree ? nightBonusFishPool : dayFishPool;
       currentFish = forceTestMoonCarpThisCast
-        ? findFishTypeById("moon_carp") || pickFishFromPool(fishPool)
+        ? findFishTypeById("moonfin") || pickFishFromPool(fishPool)
         : pickFishFromPool(fishPool);
       phase = "bite";
       currentMultiplier = currentFish.startMultiplier;
-      if (currentFish.id === "moon_carp") {
+      if (currentFish.id === "moonfin") {
         var alreadyInNightBonus = nightBonusCastsRemaining > 0;
         nightBonusCastsRemaining += NIGHT_BONUS_CASTS_GRANT;
         showNightHuntOverlay();
@@ -2025,7 +2025,7 @@
       renderRoundVisuals();
 
       var delayBeforeReelingMs =
-        currentFish.id === "moon_carp"
+        currentFish.id === "moonfin"
           ? MOON_BONUS_TRANSITION_MS + MOON_BONUS_POST_LABEL_DELAY_MS
           : 550;
 
