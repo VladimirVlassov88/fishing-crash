@@ -136,6 +136,7 @@
           </div>
         </div>
       </div>
+      <canvas class="effects-canvas" id="effectsCanvas" aria-hidden="true"></canvas>
     </div>
   </div>
 
@@ -491,10 +492,6 @@
     </div>
 
     <div class="scene-fp__rig">
-      <div class="fp-hand" aria-hidden="true">
-        <span class="fp-hand__silhouette"></span>
-        <span class="fp-hand__grip"></span>
-      </div>
       <div class="fp-rod fp-rig" id="rodRig">
         <div class="fp-rod-sprite-stack" aria-hidden="true">
           <img
@@ -514,37 +511,6 @@
             decoding="async"
           />
         </div>
-        <svg class="fp-rig__svg" viewBox="0 0 320 280" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <linearGradient id="rodMetalFp" x1="0%" y1="50%" x2="100%" y2="50%">
-              <stop offset="0%" stop-color="#343f4e"/>
-              <stop offset="42%" stop-color="#5c6d82"/>
-              <stop offset="100%" stop-color="#232d3a"/>
-            </linearGradient>
-            <linearGradient id="rodGripFp" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#283344"/>
-              <stop offset="52%" stop-color="#1b2533"/>
-              <stop offset="100%" stop-color="#141c27"/>
-            </linearGradient>
-            <linearGradient id="rodAccentFp" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stop-color="#32b8dc"/>
-              <stop offset="100%" stop-color="#136a8f"/>
-            </linearGradient>
-          </defs>
-          <g transform="rotate(-4 118 198)">
-            <g class="rod-assembly" transform-origin="118 198">
-              <path d="M118 198 L52 222 L48 232 L56 238 L122 208 Z" fill="url(#rodGripFp)" stroke="rgba(178,198,218,0.48)" stroke-width="0.88"/>
-              <path d="M58 226 L108 206 L114 212 L66 232 Z" fill="rgba(255,255,255,0.07)" stroke="none"/>
-              <path id="rodBlank" d="M118 198 Q172 132 248 58 L252 52 L258 56 L182 138 Q148 176 122 202 Z" fill="url(#rodMetalFp)" stroke="rgba(140,178,210,0.5)" stroke-width="0.56"/>
-              <path d="M248 58 L252 52 L258 56 L254 62 Z" fill="url(#rodAccentFp)" opacity="0.88"/>
-              <circle cx="132" cy="188" r="15.5" fill="#283442" stroke="rgba(210,228,246,0.45)" stroke-width="1.12"/>
-              <circle cx="132" cy="188" r="12.5" fill="#1e2834" stroke="rgba(238,215,145,0.3)" stroke-width="0.88"/>
-              <circle cx="132" cy="188" r="8" fill="none" stroke="rgba(128,205,228,0.4)" stroke-width="1.06" stroke-dasharray="3 5" class="reel-spin"/>
-              <circle cx="132" cy="188" r="4.2" fill="rgba(255,255,255,0.065)" stroke="none"/>
-              <line x1="132" y1="188" x2="252" y2="56" stroke="rgba(236,246,255,0.1)" stroke-width="2.2" stroke-linecap="round"/>
-            </g>
-          </g>
-        </svg>
       </div>
     </div>
   </div>
