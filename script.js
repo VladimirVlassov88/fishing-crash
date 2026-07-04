@@ -269,15 +269,44 @@
 
   /** Панель «Рыбы» и pickFishFromPool(): доли внутри выбранного пула */
   const fishTypes = [
-    { id: "mackerel", name: "Скумбрия", chance: 31, startMultiplier: 1.2, color: "green" },
-    { id: "seaBass", name: "Морской окунь", chance: 30, startMultiplier: 2, color: "blue" },
-    { id: "dorado", name: "Дорадо", chance: 18, startMultiplier: 3, color: "teal" },
-    { id: "barracuda", name: "Барракуда", chance: 12, startMultiplier: 3.5, color: "purple" },
-    { id: "tuna", name: "Тунец", chance: 6, startMultiplier: 6, color: "orange" },
-    { id: "goldenMarlin", name: "Золотой Марлин", chance: 2, startMultiplier: 10, color: "gold" },
+    {
+      id: "mackerel",
+      name: "Скумбрия",
+      nameEn: "Mackerel",
+      chance: 31,
+      startMultiplier: 1.2,
+      color: "green",
+    },
+    {
+      id: "seaBass",
+      name: "Морской окунь",
+      nameEn: "Sea Bass",
+      chance: 30,
+      startMultiplier: 2,
+      color: "blue",
+    },
+    { id: "dorado", name: "Дорадо", nameEn: "Dorado", chance: 18, startMultiplier: 3, color: "teal" },
+    {
+      id: "barracuda",
+      name: "Барракуда",
+      nameEn: "Barracuda",
+      chance: 12,
+      startMultiplier: 3.5,
+      color: "purple",
+    },
+    { id: "tuna", name: "Тунец", nameEn: "Tuna", chance: 6, startMultiplier: 6, color: "orange" },
+    {
+      id: "goldenMarlin",
+      name: "Золотой Марлин",
+      nameEn: "Golden Marlin",
+      chance: 2,
+      startMultiplier: 10,
+      color: "gold",
+    },
     {
       id: "moonfin",
       name: "Лунноплав",
+      nameEn: "Moonfin",
       chance: 1,
       startMultiplier: 5,
       color: "violet",
@@ -354,6 +383,7 @@
     flashBite: document.getElementById("flashBite"),
     effectsCanvas: document.getElementById("effectsCanvas"),
     biteCallout: document.getElementById("biteCallout"),
+    biteCalloutText: document.querySelector("#biteCallout .bite-callout__text"),
     bigWinCallout: document.getElementById("bigWinCallout"),
     bigWinCalloutText: document.getElementById("bigWinCalloutText"),
     biteSplash: document.getElementById("biteSplash"),
@@ -462,6 +492,16 @@
 
     var iconKey = kind === "small" ? "malek" : fishId;
     var src = fishIconSrc(iconKey);
+    var rewardTierClass =
+      kind === "small"
+        ? " reward-popup__inner--tier-small"
+        : fishId === "tuna"
+          ? " reward-popup__inner--tier-large reward-popup__inner--tuna"
+          : fishId === "moonfin"
+            ? " reward-popup__inner--tier-special reward-popup__inner--moonfin"
+            : fishId === "goldenMarlin"
+              ? " reward-popup__inner--tier-special reward-popup__inner--golden-marlin"
+              : " reward-popup__inner--tier-normal";
 
     var el = document.createElement("div");
     el.className = "reward-popup";
@@ -469,7 +509,9 @@
 
     var inner = document.createElement("div");
     inner.className =
-      "reward-popup__inner reward-popup__inner--" + (kind === "small" ? "small" : "cashout");
+      "reward-popup__inner reward-popup__inner--" +
+      (kind === "small" ? "small" : "cashout") +
+      rewardTierClass;
 
     var iconWrap = document.createElement("span");
     iconWrap.className = "fish-icon-host fish-icon-host--reward";
@@ -987,17 +1029,35 @@
     els.resistanceHud.setAttribute("aria-hidden", "true");
   }
 
-  function syncFightChartHint() {
-    if (!els.fightChartHint) return;
-    if (phase === "bite") {
-      els.fightChartHint.textContent = "На крючке";
+  function activeFishNameEn() {
+    return currentFish && currentFish.nameEn ? currentFish.nameEn : "";
+  }
+
+  function activeFishHookSubtitle() {
+    if (!currentFish) return "";
+    if (currentFish.id === "moonfin") return "NIGHT HUNT READY";
+    if (currentFish.id === "goldenMarlin") return "LEGENDARY CATCH";
+    return "ON THE HOOK";
+  }
+
+  function setFightChartActiveFishHint() {
+    var fishName = activeFishNameEn();
+    if (!fishName) {
+      els.fightChartHint.innerHTML = "&nbsp;";
       return;
     }
-    if (phase === "reeling") {
-      var fsHint = reelWallStartMs ? (Date.now() - reelWallStartMs) / 1000 : 0;
-      if (fsHint < 5) els.fightChartHint.textContent = "Тяни дальше";
-      else if (fsHint < 14) els.fightChartHint.textContent = "Рыба сопротивляется";
-      else els.fightChartHint.textContent = "Вываживание…";
+    els.fightChartHint.innerHTML =
+      '<span class="fight-chart__hint-name">' +
+      fishName +
+      '</span><span class="fight-chart__hint-sub">' +
+      activeFishHookSubtitle() +
+      "</span>";
+  }
+
+  function syncFightChartHint() {
+    if (!els.fightChartHint) return;
+    if (phase === "bite" || phase === "reeling") {
+      setFightChartActiveFishHint();
       return;
     }
     if (phase === "cashedOut") {
@@ -1441,6 +1501,9 @@
     }
     spawnBiteSplashCanvas();
     if (els.biteCallout) {
+      if (els.biteCalloutText) {
+        els.biteCalloutText.textContent = activeFishNameEn() || "";
+      }
       els.biteCallout.classList.remove("bite-callout--burst");
       void els.biteCallout.offsetWidth;
       els.biteCallout.classList.add("bite-callout--burst");
