@@ -1500,7 +1500,7 @@
       }, BITE_SPLASH_ANIM_MS + 90);
     }
     spawnBiteSplashCanvas();
-    if (els.biteCallout) {
+    if (els.biteCallout && !(currentFish && currentFish.id === "moonfin")) {
       if (els.biteCalloutText) {
         els.biteCalloutText.textContent = activeFishNameEn() || "";
       }
@@ -1595,7 +1595,7 @@
       var mkEmpty = document.createElement("span");
       mkEmpty.className = "hist-item__marker hist-item__marker--empty";
       mkEmpty.setAttribute("aria-hidden", "true");
-      mkEmpty.setAttribute("title", "Пусто");
+      mkEmpty.setAttribute("title", "No Catch");
       row.appendChild(mkEmpty);
     } else if (className === "hist-snap") {
       var mkSnap = document.createElement("span");
@@ -1899,7 +1899,7 @@
     triggerVibration([80, 50, 120]);
     updateFishingLine(0, "cashedOut");
 
-    const name = currentFish && currentFish.name ? currentFish.name : "Улов";
+    const name = currentFish && currentFish.nameEn ? currentFish.nameEn : "Catch";
     pushHistory(
       {
         label: name,
@@ -2012,9 +2012,9 @@
         currentMultiplier = 1;
         playReelWindTicks();
         if (castBeganWithNightBonusFree) {
-          pushHistory({ label: "Пусто", amount: "0 ₸" }, "hist-empty");
+          pushHistory({ label: "No Catch", amount: "0 ₸" }, "hist-empty");
         } else {
-          pushHistory({ label: "Пусто", amount: "−" + formatMoney(betLocked) + " ₸" }, "hist-empty");
+          pushHistory({ label: "No Catch", amount: "−" + formatMoney(betLocked) + " ₸" }, "hist-empty");
         }
         syncButtons();
         syncStatusText();
@@ -2035,7 +2035,7 @@
         if (els.flashSoftCyan) flash(els.flashSoftCyan, 260);
         pushHistory(
           {
-            label: "Сардина",
+            label: "Sardine",
             mult: "×" + currentMultiplier.toFixed(2),
             amount: "+" + formatMoney(smallWin) + " ₸",
           },
