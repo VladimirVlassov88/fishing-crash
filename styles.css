@@ -3451,101 +3451,101 @@ img.fish-line-hud__icon.is-loaded {
   box-shadow: none !important;
 }
 
-/* Выигрыш — тёмный бирюзово-зелёный */
-.hist-item.hist-win-green {
+/* Win / positive payout — единый зелёный стиль */
+.hist-item.hist-win-green,
+.hist-item.hist-win-gold,
+.hist-item.hist-small {
   background: linear-gradient(
     132deg,
-    rgba(10, 48, 52, 0.82) 0%,
-    rgba(6, 26, 42, 0.78) 50%,
-    rgba(8, 32, 44, 0.8) 100%
+    rgba(8, 42, 36, 0.88) 0%,
+    rgba(6, 24, 38, 0.82) 50%,
+    rgba(8, 32, 40, 0.86) 100%
   );
-  border-color: rgba(52, 190, 168, 0.42);
-  color: rgba(178, 248, 226, 0.96);
+  border-color: rgba(56, 210, 148, 0.52);
+  box-shadow:
+    0 0 18px rgba(48, 196, 132, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  color: rgba(196, 255, 232, 0.96);
 }
 
-.hist-item.hist-win-green .hist-item__mult {
-  color: rgba(130, 245, 215, 1);
-  text-shadow: 0 0 18px rgba(56, 210, 180, 0.35);
+.hist-item.hist-win-green .hist-item__label,
+.hist-item.hist-win-gold .hist-item__label,
+.hist-item.hist-small .hist-item__label {
+  color: rgba(210, 255, 238, 0.96);
 }
 
-.hist-item.hist-win-green .hist-item__amount {
-  color: rgba(210, 255, 238, 1);
-  text-shadow: 0 0 14px rgba(72, 220, 190, 0.28);
+.hist-item.hist-win-green .hist-item__mult,
+.hist-item.hist-win-gold .hist-item__mult,
+.hist-item.hist-small .hist-item__mult {
+  color: rgba(148, 255, 210, 1);
+  text-shadow: 0 0 18px rgba(56, 210, 180, 0.42);
 }
 
-/* Крупный выигрыш — тёплый премиальный акцент */
-.hist-item.hist-win-gold {
-  background: linear-gradient(
-    132deg,
-    rgba(42, 34, 14, 0.88) 0%,
-    rgba(22, 26, 38, 0.78) 52%,
-    rgba(28, 22, 18, 0.82) 100%
-  );
-  border-color: rgba(218, 182, 72, 0.42);
-  color: rgba(255, 242, 210, 0.96);
+.hist-item.hist-win-green .hist-item__amount,
+.hist-item.hist-win-gold .hist-item__amount,
+.hist-item.hist-small .hist-item__amount {
+  color: rgba(92, 232, 158, 1);
+  text-shadow: 0 0 16px rgba(56, 210, 140, 0.38);
 }
 
-.hist-item.hist-win-gold .hist-item__mult {
-  color: rgba(255, 224, 140, 1);
-  text-shadow: 0 0 16px rgba(238, 200, 90, 0.38);
-}
-
-.hist-item.hist-win-gold .hist-item__amount {
-  color: rgba(255, 236, 188, 1);
-  text-shadow: 0 0 14px rgba(230, 190, 72, 0.35);
-}
-
-/* Обрыв — бордово-красный тёмный */
+/* Loss / snap — красный стиль */
 .hist-item.hist-snap {
   background: linear-gradient(
     132deg,
-    rgba(56, 14, 26, 0.82) 0%,
-    rgba(28, 8, 18, 0.78) 48%,
-    rgba(36, 12, 22, 0.82) 100%
+    rgba(56, 14, 26, 0.88) 0%,
+    rgba(28, 8, 18, 0.84) 48%,
+    rgba(36, 12, 22, 0.88) 100%
   );
-  border-color: rgba(210, 72, 96, 0.42);
-  color: rgba(255, 205, 214, 0.94);
+  border-color: rgba(235, 72, 96, 0.54);
+  box-shadow:
+    0 0 18px rgba(220, 56, 82, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  color: rgba(255, 188, 198, 0.96);
+}
+
+.hist-item.hist-snap .hist-item__label {
+  color: rgba(255, 168, 182, 0.98);
 }
 
 .hist-item.hist-snap .hist-item__mult {
-  color: rgba(255, 168, 186, 1);
-  text-shadow: 0 0 14px rgba(230, 70, 100, 0.28);
+  color: rgba(255, 118, 142, 1);
+  text-shadow: 0 0 14px rgba(230, 70, 100, 0.38);
 }
 
-/* Пустой заброс — нейтральный тёмно-синий */
+.hist-item.hist-snap .hist-item__amount {
+  color: rgba(255, 98, 122, 1);
+  text-shadow: 0 0 14px rgba(230, 56, 86, 0.32);
+}
+
+/* No Catch — тёмно-синий, в тон панели */
 .hist-item.hist-empty {
   background: linear-gradient(
     132deg,
-    rgba(10, 24, 52, 0.72) 0%,
-    rgba(6, 14, 36, 0.68) 100%
+    rgba(10, 24, 52, 0.82) 0%,
+    rgba(6, 14, 36, 0.78) 100%
   );
-  border-color: rgba(74, 108, 158, 0.32);
-  color: rgba(178, 202, 236, 0.84);
+  border-color: rgba(74, 108, 158, 0.38);
+  box-shadow:
+    0 0 12px rgba(48, 88, 140, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  color: rgba(188, 210, 238, 0.9);
+}
+
+.hist-item.hist-empty .hist-item__label {
+  color: rgba(210, 226, 248, 0.94);
 }
 
 .hist-item.hist-empty .hist-item__amount {
   font-weight: 800;
   font-size: 0.96rem;
-  color: rgba(210, 226, 248, 0.95);
+  color: rgba(178, 198, 228, 0.82);
 }
 
-/* Малёк */
-.hist-item.hist-small {
-  background: linear-gradient(
-    132deg,
-    rgba(12, 44, 52, 0.78) 0%,
-    rgba(8, 28, 42, 0.74) 100%
-  );
-  border-color: rgba(72, 200, 188, 0.38);
-  color: rgba(188, 242, 232, 0.94);
-}
-
-.hist-item.hist-small .hist-item__mult {
-  color: rgba(120, 236, 218, 1);
-}
-
-.hist-item.hist-small .hist-item__amount {
-  color: rgba(210, 252, 246, 1);
+.hist-item.hist-empty .hist-item__marker--empty {
+  background: rgba(14, 28, 52, 0.82);
+  border-color: rgba(82, 118, 168, 0.38);
+  color: rgba(168, 194, 228, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .dock-bar {
