@@ -2290,29 +2290,21 @@ body.event-snap .lake {
   flex: 1 1 200px;
 }
 
-.brand h1 {
-  font-size: clamp(1.4rem, 4.2vw, 2rem);
-  letter-spacing: 0.08em;
-  font-weight: 800;
-  background: linear-gradient(180deg, #fff 0%, #c8d6ea 45%, #7e90aa 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 0 18px rgba(238, 207, 82, 0.35));
+.brand-logo {
+  width: clamp(190px, 28vw, 286px);
+  max-width: 100%;
+  margin: -4px 0 2px;
 }
 
-.brand h1 span.x {
-  color: var(--gold);
-  -webkit-text-fill-color: var(--gold);
-  filter: drop-shadow(0 0 14px var(--gold-glow));
-}
-
-.brand .tagline {
-  font-size: 0.78rem;
-  color: var(--muted);
-  margin-top: 4px;
-  max-width: 300px;
-  line-height: 1.4;
+.brand-logo__image {
+  display: block;
+  width: 100%;
+  height: clamp(54px, 7vw, 76px);
+  object-fit: contain;
+  object-position: left center;
+  filter:
+    drop-shadow(0 0 12px rgba(238, 207, 82, 0.22))
+    drop-shadow(0 0 18px rgba(56, 214, 255, 0.1));
 }
 
 .stats {
@@ -2538,9 +2530,9 @@ body.event-snap .lake {
   min-width: 0;
   padding-inline-end: 6px;
   font-weight: 700;
-  font-size: 0.86rem;
-  letter-spacing: 0.02em;
-  line-height: 1.22;
+  font-size: clamp(0.78rem, 1.45vw, 0.86rem);
+  letter-spacing: 0.01em;
+  line-height: 1.16;
   color: rgba(242, 248, 255, 0.96);
 }
 
@@ -4708,10 +4700,6 @@ button:disabled {
 
   .auto-mult {
     margin-left: auto;
-  }
-
-  .brand .tagline {
-    display: none;
   }
 
   .stats {
